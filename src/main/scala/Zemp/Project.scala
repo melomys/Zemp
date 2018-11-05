@@ -18,6 +18,9 @@ def main(canvas: html.Canvas): Unit = {
  canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
 
+    println("canvas: "+ canvas.height)
+    println("window: "+ dom.window.innerHeight)
+    println("topOffset: "+ canvas.offsetTop)
 
     val takt = 5
 
@@ -28,14 +31,17 @@ def main(canvas: html.Canvas): Unit = {
     val puffer = intervall/2
     val abstandToene = 30;
     val fontHeight = 15
-    val zeilenHoehe = abstandToene*10
+    val zeilenHoehe = tones.length*abstandToene - 1 + 2*abstandToene
+
+    val farbeHintergrund = "#d0d0d0"
+    val farbeErsteStimme = "#DD1E1ECC"
+
     //laenge der linie
-    val laenge = dom.window.innerWidth.asInstanceOf[Int] - 2*randSeite;
+    val laenge = canvas.width - 2*randSeite;
     //platz zwischen erstem schlag und linienbeginn
     val emptySpace = laenge - (((laenge - puffer)/intervall) - ((laenge -puffer)/intervall)%takt)*intervall
 
     ctx.font = fontHeight.toString+ "pt Calibri"
-    ctx.strokeStyle = "#d0d0d0"
     ctx.fillStyle="#101010"
 
     var lastDown = Point(-1,-1)
@@ -43,6 +49,7 @@ def main(canvas: html.Canvas): Unit = {
 
 def zeichneHinterGrund() =
 {
+  ctx.strokeStyle =farbeHintergrund
   for (zeile <- 0 to 1)
   {
     for (i <- 0 to 7)
@@ -69,7 +76,8 @@ def zeichneHinterGrund() =
 
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
-      println(e.clientY)
+      println("("+e.clientX+ "/" + e.clientY + ")")
+     println(getNaechstesY(e.clientY.toInt))
       getNaechstesX(e.clientX.toInt)
      if(lastDown.x != -1)
        {
@@ -81,15 +89,19 @@ def zeichneHinterGrund() =
 
     canvas.onmouseup = (e:dom.MouseEvent) =>
       {
+        val x = getXCoordinateCanvas(e.clientX.toInt)
+        val y = getYCoordinateCanvas(e.clientY.toInt)
         if(lastDown.x == -1)
         {
-          lastDown = Point(e.clientX.toInt, e.clientY.toInt)
+          lastDown = Point(x,y)
 
         }else
           {
+            ctx.lineWidth = 2
+            ctx.strokeStyle = farbeErsteStimme
             ctx.beginPath()
             ctx.moveTo(getNaechstesX(lastDown.x),getNaechstesY(lastDown.y))
-            ctx.lineTo(getNaechstesX(e.clientX.toInt),getNaechstesY(e.clientY.toInt))
+            ctx.lineTo(getNaechstesX(x),getNaechstesY(y))
             ctx.stroke()
             lastDown = Point(-1,-1)
           }
@@ -109,10 +121,23 @@ def zeichneHinterGrund() =
     }
 
     def getNaechstesY(y: Int) : Int = {
-      val rest = (y-randOben)%abstandToene
-      if(rest < abstandToene/2 ) y-rest else y+abstandToene-rest
+      val temp = y - randOben
+      val rest = temp%abstandToene
+      println("voll: " +(y-randOben))
+      println("rest: " + rest)
+      if(rest < abstandToene/2 ) temp+randOben-rest else temp+randOben+abstandToene-rest
 
     }
+
+    def getYCoordinateCanvas(y: Int) : Int = {
+      y - canvas.offsetTop.toInt
+    }
+    def getXCoordinateCanvas(x: Int): Int = {
+      x - canvas.offsetLeft.toInt
+    }
+
+
+
 
     zeichneHinterGrund()
 //    dom.window.setInterval(() => run, 50)
