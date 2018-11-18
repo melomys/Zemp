@@ -23,13 +23,15 @@ object Project
   var canvas: html.Canvas = null
   var ctx: dom.CanvasRenderingContext2D = null
 
-  val randOben = 150
-  val randSeite = 50
+
   val intervall = 30
-  val puffer = intervall / 2
   val abstandToene = 30
 
-  val zeilenHoehe = tones.length * abstandToene - 1 + 2 * abstandToene
+  val randOben = 5* abstandToene
+  val randSeite = 50
+  val puffer = intervall / 2
+
+  val zeilenHoehe = (tones.length - 1) * abstandToene + 3 * abstandToene
 
   val fontHeight = 15
   val font = fontHeight + "pt Calibri"
@@ -52,7 +54,9 @@ object Project
     initializiere(can)
     definiereEvents
     zeichneHinterGrund
-    dom.window.setInterval(() => zeichne, 50)
+
+
+    dom.window.setInterval(() => zeichne, 100)
 
 
   }
@@ -69,10 +73,6 @@ object Project
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
     laenge = canvas.width - 2 * randSeite;
     emptySpace = laenge - (((laenge - puffer) / intervall) - ((laenge - puffer) / intervall) % takt) * intervall
-
-    println("canvas: " + canvas.height)
-    println("window: " + dom.window.innerHeight)
-    println("topOffset: " + canvas.offsetTop)
 
 
   }
@@ -93,7 +93,7 @@ object Project
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
 
-      println("MouseDown on: ("+e.clientX+"/"+e.clientY+")")
+      println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
       getNaechstesX(e.clientX.toInt)
 
     }
@@ -121,6 +121,8 @@ object Project
 
         stueck.append(Ton(note, start, laenge))
 
+        println("Ton: (" + note + "|" + start + "|" + laenge + ")")
+
 
 
         // für kein kontinuierliches Ziehen die Kommentierung der beiden folgenden Zeilen tauschen
@@ -147,8 +149,6 @@ object Project
       ctx.beginPath
       ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)))
       ctx.lineTo(getXKoordinateZumZeichnen(stueck(i).start + stueck(i).laenge), getYKoordinateZumZeichnenAusTon(stueck(i)))
-
-      println("Punkt zum Zeichnen: ("+ getXKoordinateZumZeichnen(stueck(i).start + stueck(i).laenge) + "/" + getYKoordinateZumZeichnenAusTon(stueck(i)) + ")")
       ctx.stroke
 
     }
@@ -187,7 +187,7 @@ object Project
 
   def getNaechstesX(x: Int): Int =
   {
-    val temp = math.max(math.min(laenge + randSeite, x), randSeite + emptySpace)
+    val temp = math.max(math.min(laenge + randSeite , x), randSeite + emptySpace)
     //abStartPoint beschreibt die Pixelanzahl im verhältnis zum ersten Schlag
     var abStartPoint = temp - randSeite - emptySpace
     //stellt sicher, dass das resultierende x im gültigen bereich liegt
@@ -199,8 +199,8 @@ object Project
 
   def getNaechstesY(y: Int): Int =
   {
-    val temp = y - randOben
-    val rest = temp % abstandToene
+
+    val rest = y % abstandToene
     //println("voll: " +(y-randOben))
     // println("rest: " + rest)
     if (rest < abstandToene / 2) y - rest else y + abstandToene - rest
@@ -210,14 +210,22 @@ object Project
   def getSchlagpunkt(x: Int): Int =
   {
     //ab dem ersten Schlag
-    (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1
+    println("schlagpunkt: " +( (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
+    (getNaechstesX(x) - randSeite - emptySpace ) / intervall + 1
 
   }
 
   def getNote(y: Int): String =
   {
-    val temp = (getNaechstesY(y) - randOben) / abstandToene
-    tones(temp)
+    //anzahl der toene ab dem höchsten möglichen Ton pro Zeile da 'tones' mit index 0 beginnt muss um 1 verschoben werden
+
+    //manchmal +1 nach abstandToene manchmal nicht >: aber wahrscheinlich nicht
+    val temp = ((getNaechstesY(y) - randOben) / abstandToene ) % (zeilenHoehe / abstandToene)
+
+    //wenn temp im bereich von tones liegt, kann direkt der ton String gespeichert werden
+    if (temp >= 0 && temp < tones.length) tones(temp) else temp.toString
+
+
   }
 
   def getYCoordinateCanvas(y: Int): Int =
@@ -238,7 +246,9 @@ object Project
 
   def getYKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
-    val y = tones.indexOf(ton.hoehe)
+
+    var y = tones.indexOf(ton.hoehe)
+    if (y == -1) y = ton.hoehe.toInt
     randOben + abstandToene * y
 
   }
@@ -246,7 +256,7 @@ object Project
   def getXKoordinateZumZeichnen(x: Double): Int =
   {
 
-    (randSeite + emptySpace + (x-1) * intervall).toInt
+    (randSeite + emptySpace + (x - 1) * intervall).toInt
 
   }
 }
