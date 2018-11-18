@@ -217,7 +217,7 @@ object Project
 
   def getNote(y: Int): String =
   {
-    //anzahl der toene ab dem höchsten möglichen Ton pro Zeile da 'tones' mit index 0 beginnt muss um 1 verschoben werden
+    //anzahl der toene ab dem höchsten möglichen Ton pro Zeile
 
     //manchmal +1 nach abstandToene manchmal nicht >: aber wahrscheinlich nicht
     val temp = ((getNaechstesY(y) - randOben) / abstandToene ) % (zeilenHoehe / abstandToene)
