@@ -2,12 +2,13 @@ package Zemp
 
 import org.scalajs.dom
 import org.scalajs.dom.html
+import outwatch.dom._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js.annotation.JSExport
 
 
-case class Point(x: Int, y: Int)
+case class Pointt(x: Int, y: Int)
 
 case class Ton(hoehe: String, start: Double, laenge: Double)
 
@@ -27,7 +28,7 @@ object Project
   val intervall = 30
   val abstandToene = 30
 
-  val randOben = 5* abstandToene
+  val randOben = 5 * abstandToene
   val randSeite = 50
   val puffer = intervall / 2
 
@@ -46,17 +47,101 @@ object Project
   var emptySpace = 0
 
 
-  var lastDown = Point(-1, -1)
+  var lastDown = Pointt(-1, -1)
 
-  @JSExport
-  def main(can: html.Canvas): Unit =
+  import monix.execution._
+  import monix.reactive._
+  import rx._
+
+  implicit def RxAsValueObservable: AsValueObservable[Rx] = new AsValueObservable[Rx]
   {
-    initializiere(can)
-    definiereEvents
-    zeichneHinterGrund
+    override def as[T](stream: Rx[T]): ValueObservable[T] = new ValueObservable[T]
+    {
+      def value = Option(stream.now)
 
+      def observable = Observable.create[T](OverflowStrategy.Unbounded)
+        { observer =>
+          implicit val ctx = Ctx.Owner.Unsafe
+          val obs = stream.triggerLater(observer.onNext(_))
+          Cancelable(() => obs.kill())
+        }
+    }
+  }
+
+  implicit object VarAsObserver extends AsObserver[Var]
+  {
+    override def as[T](stream: Var[_ >: T]): Observer[T] = new Observer.Sync[T]
+    {
+      override def onNext(elem: T): Ack =
+      {
+        stream() = elem
+        Ack.Continue
+      }
+
+      override def onError(ex: Throwable): Unit = throw ex
+
+      override def onComplete(): Unit = ()
+    }
+  }
+
+  // if you want to use managed()
+  implicit def obsToCancelable(obs: Obs): Cancelable =
+  {
+    Cancelable(() => obs.kill())
+  }
+
+  def main(args: Array[String]): Unit =
+  {
+
+    val canvas: html.Canvas = dom.document.getElementById("canvas").asInstanceOf[html.Canvas]
+    // val myComponent = div(color := "magenta", "Hello World", cls := "hello")
+
+    //OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
+
+
+    // val dynamicSize: Observable[VDomModifier] = Observable.interval(1 second).map(i => fontSize := s"${i}px")
+    // val meineVal = Handler.unsafe("3")
+
+    // val newDiv = div(meineVal)
+
+    // OutWatch.renderInto("#app", newDiv).unsafeRunSync()
+
+    // meineVal.onNext("neuer String")
+
+    initializiere(canvas)
+    definiereEvents
+    //zeichneHinterGrund
+
+    //    paper.setup(canvas)
+    //
+    //    dom.console.log(paper)
+    //    dom.console.log(paper.view.toString)
+    //
+    //
+    //    paper.view.draw
+    //    val path = new Path
+    //   // path.strokeColor = new Color("black")
+    //
+    //
+    //    path.strokeColor = "black"
+    //
+    //    val start = new Point(200,200)
+    //    val start2 = new Point(300,300)
+    //    path.moveTo(start)
+    //    val end = new Point(400,400)
+    //    path.lineTo(end)
+    //
+    //    dom.console.log(path)
+    //    dom.console.log(start)
+    //    dom.console.log(end)
+    //    paper.view.draw
 
     dom.window.setInterval(() => zeichne, 100)
+  }
+
+  @JSExport
+  def main2(can: html.Canvas): Unit =
+  {
 
 
   }
@@ -85,7 +170,7 @@ object Project
     {
       if (e.keyCode == 27)
       {
-        lastDown = Point(-1, -1)
+        lastDown = Pointt(-1, -1)
       }
 
     }
@@ -95,7 +180,6 @@ object Project
 
       println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
       getNaechstesX(e.clientX.toInt)
-
     }
     canvas.onmouseup = (e: dom.MouseEvent) =>
     {
@@ -104,7 +188,7 @@ object Project
       val y = getYCoordinateCanvas(e.clientY.toInt)
       if (lastDown.x == -1)
       {
-        lastDown = Point(x, y)
+        lastDown = Pointt(x, y)
 
       } else
       {
@@ -113,11 +197,11 @@ object Project
         //hinzufuegen zu stueck
 
         //start ist der letzte Punkt an dem eine Note hinzugefuegt worden ist
-        val start = getSchlagpunkt(lastDown.x)
+        val start = getSchlagpunkt(lastDown.x, lastDown.y)
         //note kriegt den String zugewiesen auf den geklickt wurde
         val note = getNote(y)
 
-        val laenge = getSchlagpunkt(x) - start
+        val laenge = getSchlagpunkt(x, y) - start
 
         stueck.append(Ton(note, start, laenge))
 
@@ -126,7 +210,7 @@ object Project
 
 
         // für kein kontinuierliches Ziehen die Kommentierung der beiden folgenden Zeilen tauschen
-        lastDown = Point(x, y)
+        lastDown = Pointt(x, y)
         //   lastDown = Point(-1,-1)
 
 
@@ -139,17 +223,46 @@ object Project
   {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     zeichneHinterGrund()
-
+    val schlaegeProZeile = (laenge - emptySpace) / intervall
 
     ctx.lineWidth = 2
     ctx.strokeStyle = farbeErsteStimme
 
     for (i <- 0 to stueck.length - 1)
     {
+
+
+      val start = stueck(i).start
+      val laenge = stueck(i).laenge
+
+
       ctx.beginPath
-      ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)))
-      ctx.lineTo(getXKoordinateZumZeichnen(stueck(i).start + stueck(i).laenge), getYKoordinateZumZeichnenAusTon(stueck(i)))
-      ctx.stroke
+      ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
+
+
+      //zeile ist immer die relative zeile zum startschlag
+      def rek(zeile: Int):Unit =
+      {
+
+
+        println(start + laenge - (getZeile(start) +zeile)*schlaegeProZeile + " <= schlaegeProZeile: "+ schlaegeProZeile)
+
+        if (start + laenge - (getZeile(start) +zeile)*schlaegeProZeile  <= schlaegeProZeile )
+        {
+          ctx.lineTo(getXKoordinateZumZeichnen(start%schlaegeProZeile + laenge - zeile*schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start)+(zeile*zeilenHoehe))
+          ctx.stroke
+        }
+        else
+        {
+          ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile+1),getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start)+(zeile*zeilenHoehe))
+          ctx.stroke
+          ctx.beginPath
+          ctx.moveTo(getXKoordinateZumZeichnen(1),getYKoordinateZumZeichnenAusTon(stueck(i))+ getZeile(start)+((zeile +1)*zeilenHoehe))
+          rek(zeile+1)
+        }
+      }
+
+      rek(0)
 
     }
 
@@ -187,7 +300,7 @@ object Project
 
   def getNaechstesX(x: Int): Int =
   {
-    val temp = math.max(math.min(laenge + randSeite , x), randSeite + emptySpace)
+    val temp = math.max(math.min(laenge + randSeite, x), randSeite + emptySpace)
     //abStartPoint beschreibt die Pixelanzahl im verhältnis zum ersten Schlag
     var abStartPoint = temp - randSeite - emptySpace
     //stellt sicher, dass das resultierende x im gültigen bereich liegt
@@ -207,11 +320,15 @@ object Project
 
   }
 
-  def getSchlagpunkt(x: Int): Int =
+  def getSchlagpunkt(x: Int, y: Int): Int =
   {
+    val zeile: Int = (y - randOben) / zeilenHoehe
+
+    val schlaegeProZeile = (laenge - emptySpace) / intervall
     //ab dem ersten Schlag
-    println("schlagpunkt: " +( (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
-    (getNaechstesX(x) - randSeite - emptySpace ) / intervall + 1
+    println("zeile: " + zeile)
+    println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
+    (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1 + zeile * schlaegeProZeile
 
   }
 
@@ -220,7 +337,7 @@ object Project
     //anzahl der toene ab dem höchsten möglichen Ton pro Zeile
 
     //manchmal +1 nach abstandToene manchmal nicht >: aber wahrscheinlich nicht
-    val temp = ((getNaechstesY(y) - randOben) / abstandToene ) % (zeilenHoehe / abstandToene)
+    val temp = ((getNaechstesY(y) - randOben) / abstandToene) % (zeilenHoehe / abstandToene)
 
     //wenn temp im bereich von tones liegt, kann direkt der ton String gespeichert werden
     if (temp >= 0 && temp < tones.length) tones(temp) else temp.toString
@@ -240,7 +357,8 @@ object Project
 
   def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
-    getXKoordinateZumZeichnen(ton.start)
+    println("modulo schlag in zeile " + ton.start%((laenge - emptySpace)/intervall))
+    getXKoordinateZumZeichnen(ton.start%((laenge - emptySpace)/intervall))
 
   }
 
@@ -259,5 +377,21 @@ object Project
     (randSeite + emptySpace + (x - 1) * intervall).toInt
 
   }
+
+  //gibt den abstand wieder, der auf die y  koordinate raufgerchnet werden muss,
+  // je nach dem in welcher zeile man ist
+
+  def zeilenAbstand(schlag: Double): Int =
+  {
+    getZeile(schlag) * zeilenHoehe
+
+  }
+
+  def getZeile(schlag: Double): Int =
+  {
+    val schlaegeProZeile = (laenge - emptySpace) / intervall
+    (schlag / schlaegeProZeile).toInt
+  }
+
 }
 
