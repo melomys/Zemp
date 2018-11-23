@@ -222,6 +222,8 @@ object Project
 
   def zeichne() =
   {
+
+    var lastPoint = Pointt(0,0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     zeichneHinterGrund()
     val schlaegeProZeile = (laenge - emptySpace) / intervall
@@ -237,6 +239,13 @@ object Project
       val laenge = stueck(i).laenge
 
 
+      if(i> 0)
+        {
+          ctx.beginPath
+          ctx.moveTo(lastPoint.x, lastPoint.y)
+          ctx.lineTo(lastPoint.x,getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start))
+          ctx.stroke
+        }
       ctx.beginPath
       ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
 
@@ -244,19 +253,21 @@ object Project
       //zeile ist immer die relative zeile zum startschlag
       def rek(zeile: Int): Unit =
       {
+      //  println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
 
-
-        println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
-
-        if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+        if (start + laenge  - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
         {
-          ctx.lineTo(getXKoordinateZumZeichnen(start % schlaegeProZeile + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+          var restSchlaege = start % schlaegeProZeile
+          if(restSchlaege == 0) restSchlaege = schlaegeProZeile
+          lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+          ctx.lineTo(lastPoint.x,lastPoint.y)
           ctx.stroke
         }
         else
         {
           ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
           ctx.stroke
+         //dom.window.alert("hallo")
           ctx.beginPath
           ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
           rek(zeile + 1)
@@ -359,8 +370,9 @@ object Project
 
   def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
-    println("modulo schlag in zeile " + ton.start % ((laenge - emptySpace) / intervall))
-    getXKoordinateZumZeichnen(ton.start % ((laenge - emptySpace) / intervall))
+    val schlaegeProZeile = ((laenge - emptySpace) / intervall)
+    val moduloSchlag = ton.start % schlaegeProZeile
+    getXKoordinateZumZeichnen(if (moduloSchlag == 0) schlaegeProZeile else moduloSchlag)
 
   }
 
@@ -392,7 +404,7 @@ object Project
   def getZeile(schlag: Double): Int =
   {
     val schlaegeProZeile = (laenge - emptySpace) / intervall
-    (schlag / schlaegeProZeile).toInt
+    ((schlag-1)/ schlaegeProZeile).toInt
   }
 
 }
