@@ -26,7 +26,8 @@ object Project
 
 
   val intervall = 30
-  val abstandToene = 30
+  val abstandToene = 15
+  val zeilenAnzahl = 4
 
   val randOben = 5 * abstandToene
   val randSeite = 50
@@ -241,24 +242,24 @@ object Project
 
 
       //zeile ist immer die relative zeile zum startschlag
-      def rek(zeile: Int):Unit =
+      def rek(zeile: Int): Unit =
       {
 
 
-        println(start + laenge - (getZeile(start) +zeile)*schlaegeProZeile + " <= schlaegeProZeile: "+ schlaegeProZeile)
+        println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
 
-        if (start + laenge - (getZeile(start) +zeile)*schlaegeProZeile  <= schlaegeProZeile )
+        if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
         {
-          ctx.lineTo(getXKoordinateZumZeichnen(start%schlaegeProZeile + laenge - zeile*schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start)+(zeile*zeilenHoehe))
+          ctx.lineTo(getXKoordinateZumZeichnen(start % schlaegeProZeile + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
           ctx.stroke
         }
         else
         {
-          ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile+1),getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start)+(zeile*zeilenHoehe))
+          ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
           ctx.stroke
           ctx.beginPath
-          ctx.moveTo(getXKoordinateZumZeichnen(1),getYKoordinateZumZeichnenAusTon(stueck(i))+ getZeile(start)+((zeile +1)*zeilenHoehe))
-          rek(zeile+1)
+          ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
+          rek(zeile + 1)
         }
       }
 
@@ -271,9 +272,9 @@ object Project
   def zeichneHinterGrund() =
   {
     ctx.strokeStyle = farbeHintergrund
-    for (zeile <- 0 to 1)
+    for (zeile <- 0 to zeilenAnzahl - 1)
     {
-      for (i <- 0 to 7)
+      for (i <- 0 to tones.length - 1)
       {
         ctx.font = font
         ctx.fillStyle = fontStyle
@@ -288,10 +289,11 @@ object Project
       }
       for (i <- 0 to (laenge - emptySpace) / intervall)
       {
+
         ctx.beginPath()
         if (i % takt == 0) ctx.lineWidth = 2 else ctx.lineWidth = 1
         ctx.moveTo(randSeite + laenge - i * intervall, randOben + zeile * zeilenHoehe)
-        ctx.lineTo(randSeite + laenge - i * intervall, randOben + zeile * zeilenHoehe + intervall * (tones.length - 1))
+        ctx.lineTo(randSeite + laenge - i * intervall, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
         ctx.stroke()
       }
     }
@@ -357,8 +359,8 @@ object Project
 
   def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
-    println("modulo schlag in zeile " + ton.start%((laenge - emptySpace)/intervall))
-    getXKoordinateZumZeichnen(ton.start%((laenge - emptySpace)/intervall))
+    println("modulo schlag in zeile " + ton.start % ((laenge - emptySpace) / intervall))
+    getXKoordinateZumZeichnen(ton.start % ((laenge - emptySpace) / intervall))
 
   }
 
