@@ -205,6 +205,8 @@ object Project
         val laenge = getSchlagpunkt(x, y) - start
 
         stueck.append(Ton(note, start, laenge))
+        stueck  = stueck.sortWith((A,B : Ton) => A.start < B.start )
+        println(stueck)
 
         println("Ton: (" + note + "|" + start + "|" + laenge + ")")
 
@@ -223,7 +225,9 @@ object Project
   def zeichne() =
   {
 
-    var lastPoint = Pointt(0,0)
+
+
+    var lastPoint = Pointt(0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     zeichneHinterGrund()
     val schlaegeProZeile = (laenge - emptySpace) / intervall
@@ -239,13 +243,13 @@ object Project
       val laenge = stueck(i).laenge
 
 
-      if(i> 0)
-        {
-          ctx.beginPath
-          ctx.moveTo(lastPoint.x, lastPoint.y)
-          ctx.lineTo(lastPoint.x,getYKoordinateZumZeichnenAusTon(stueck(i))+zeilenAbstand(start))
-          ctx.stroke
-        }
+      if (existiertDirekterVorgaengerTon(stueck(i)))
+      {
+        ctx.beginPath
+        ctx.moveTo(lastPoint.x, lastPoint.y)
+        ctx.lineTo(lastPoint.x, getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
+        ctx.stroke
+      }
       ctx.beginPath
       ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
 
@@ -253,21 +257,21 @@ object Project
       //zeile ist immer die relative zeile zum startschlag
       def rek(zeile: Int): Unit =
       {
-      //  println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
+        //  println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
 
-        if (start + laenge  - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+        if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
         {
           var restSchlaege = start % schlaegeProZeile
-          if(restSchlaege == 0) restSchlaege = schlaegeProZeile
+          if (restSchlaege == 0) restSchlaege = schlaegeProZeile
           lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
-          ctx.lineTo(lastPoint.x,lastPoint.y)
+          ctx.lineTo(lastPoint.x, lastPoint.y)
           ctx.stroke
         }
         else
         {
           ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
           ctx.stroke
-         //dom.window.alert("hallo")
+          //dom.window.alert("hallo")
           ctx.beginPath
           ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
           rek(zeile + 1)
@@ -404,7 +408,23 @@ object Project
   def getZeile(schlag: Double): Int =
   {
     val schlaegeProZeile = (laenge - emptySpace) / intervall
-    ((schlag-1)/ schlaegeProZeile).toInt
+    ((schlag - 1) / schlaegeProZeile).toInt
+  }
+
+  def existiertDirekterVorgaengerTon(ton : Ton): Boolean =
+  {
+      def rek(i : Int): Boolean =
+    {
+      if(i == stueck.length)
+        {
+          false
+        }else
+        {
+          if(ton.start == stueck(i).start + stueck(i).laenge) true else rek(i+1)
+        }
+    }
+    rek(0)
+
   }
 
 }
