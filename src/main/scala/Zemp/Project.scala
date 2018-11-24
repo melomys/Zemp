@@ -155,7 +155,7 @@ object Project
 
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
-   // println(ctx.font)
+    // println(ctx.font)
 
     canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
@@ -181,7 +181,7 @@ object Project
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
 
-    //  println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
+      //  println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
       getNaechstesX(e.clientX.toInt)
     }
     canvas.onmouseup = (e: dom.MouseEvent) =>
@@ -208,11 +208,10 @@ object Project
 
         stueck.append(Ton(note, start, laenge))
         stueck = stueck.sortWith((A, B: Ton) => A.start < B.start)
-      //  println(stueck)
+        //  println(stueck)
 
-       // println("Ton: (" + note + "|" + start + "|" + laenge + ")")
-
-
+        // println("Ton: (" + note + "|" + start + "|" + laenge + ")")
+        hintTon = Ton(note, start + laenge, 0)
 
         // für kein kontinuierliches Ziehen die Kommentierung der beiden folgenden Zeilen tauschen
         lastDown = Pointt(x, y)
@@ -339,9 +338,11 @@ object Project
   {
     val reverse = stueck.reverse
     ctx.strokeStyle = farbeHint;
-    if(lastDown.x != -1 && hintTon.laenge > 0)
+    println(0)
+    if (lastDown.x != -1 && hintTon.laenge > 0)
     {
-val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
+      println(1)
+      val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
       val start = hintTon.start
 
       val laenge = hintTon.laenge
@@ -372,27 +373,32 @@ val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
 
       rek(0)
 
-
-      if(stueck.length > 0)
+      println(2)
+      if (stueck.length > 0)
       {
         if (hintTon.start < stueck(0).start)
         {
 
-          if(hintTon.start+hintTon.laenge == stueck(0).start)
-            {
-              ctx.beginPath
-              ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon)+ zeilenAbstand(hintTon.start + hintTon.laenge))
-              ctx.lineTo(getXKoordinateZumZeichnen(stueck(0).start),getYKoordinateZumZeichnenAusTon(stueck(0))+zeilenAbstand(stueck(0).start))
-              ctx.stroke
-            }
+          if (hintTon.start + hintTon.laenge == stueck(0).start)
+          {
+            ctx.beginPath
+            ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
+            ctx.lineTo(getXKoordinateZumZeichnen(stueck(0).start), getYKoordinateZumZeichnenAusTon(stueck(0)) + zeilenAbstand(stueck(0).start))
+            ctx.stroke
+          }
         } else
         {
 
+          println(2.1)
 
           def rek2(i: Int): Unit =
           {
+            println(2.2 + " " + i)
+            println(reverse)
+            println("HintTon: " + hintTon)
             if (reverse(i).start < hintTon.start)
             {
+
               val ton = reverse(i)
               if (ton.start + ton.laenge == hintTon.start)
               {
@@ -404,7 +410,7 @@ val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
               if (i > 0 && hintTon.start + hintTon.laenge == reverse(i - 1).start)
               {
                 ctx.beginPath
-                ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start+hintTon.laenge))
+                ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
                 ctx.lineTo(getXKoordinateZumZeichnen(reverse(i - 1).start), getYKoordinateZumZeichnenAusTon(reverse(i - 1)) + zeilenAbstand(reverse(i - 1).start))
                 ctx.stroke
               }
@@ -418,11 +424,11 @@ val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
           }
 
           rek2(0)
+          println(3)
         }
 
       }
     }
-    println("2")
 
   }
 
@@ -454,8 +460,8 @@ val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
 
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
     //ab dem ersten Schlag
-  //  println("zeile: " + zeile)
-   // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
+    //  println("zeile: " + zeile)
+    // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
     (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1 + zeile * schlaegeProZeile
 
   }
