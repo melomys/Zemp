@@ -41,6 +41,7 @@ object Project
 
   val farbeHintergrund = "#d0d0d0"
   val farbeErsteStimme = "#DD1E1ECC"
+  val farbeHint = "#0000ff"
 
   //laenge der linie
   var laenge = 0;
@@ -49,6 +50,7 @@ object Project
 
 
   var lastDown = Pointt(-1, -1)
+  var hintTon = Ton("Dummy", -1, -1)
 
   import monix.execution._
   import monix.reactive._
@@ -153,7 +155,7 @@ object Project
 
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
-    println(ctx.font)
+   // println(ctx.font)
 
     canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
@@ -179,14 +181,14 @@ object Project
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
 
-      println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
+    //  println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
       getNaechstesX(e.clientX.toInt)
     }
     canvas.onmouseup = (e: dom.MouseEvent) =>
     {
 
-      val x = getXCoordinateCanvas(e.clientX.toInt)
-      val y = getYCoordinateCanvas(e.clientY.toInt)
+      val x = getXCoordinateFromCanvas(e.clientX.toInt)
+      val y = getYCoordinateFromCanvas(e.clientY.toInt)
       if (lastDown.x == -1)
       {
         lastDown = Pointt(x, y)
@@ -205,10 +207,10 @@ object Project
         val laenge = getSchlagpunkt(x, y) - start
 
         stueck.append(Ton(note, start, laenge))
-        stueck  = stueck.sortWith((A,B : Ton) => A.start < B.start )
-        println(stueck)
+        stueck = stueck.sortWith((A, B: Ton) => A.start < B.start)
+      //  println(stueck)
 
-        println("Ton: (" + note + "|" + start + "|" + laenge + ")")
+       // println("Ton: (" + note + "|" + start + "|" + laenge + ")")
 
 
 
@@ -220,11 +222,28 @@ object Project
       }
 
     }
+    canvas.onmousemove = (e: dom.MouseEvent) =>
+    {
+      //wenn noch nichts angeklickt wurde muss hier nichts weiter getan werden
+      if (lastDown.x != -1)
+      {
+        val x = getXCoordinateFromCanvas(e.clientX.toInt)
+        val y = getYCoordinateFromCanvas(e.clientY.toInt)
+
+        val start = getSchlagpunkt(lastDown.x, lastDown.y)
+        //note kriegt den String zugewiesen auf den geklickt wurde
+        val note = getNote(y)
+
+        val laenge = getSchlagpunkt(x, y) - start
+
+        hintTon = Ton(note, start, laenge)
+
+      }
+    }
   }
 
   def zeichne() =
   {
-
 
 
     var lastPoint = Pointt(0, 0)
@@ -281,6 +300,7 @@ object Project
       rek(0)
 
     }
+    zeichneHint
 
   }
 
@@ -315,6 +335,59 @@ object Project
 
   }
 
+  def zeichneHint(): Unit =
+  {
+    val reverse = stueck.reverse
+    ctx.strokeStyle = farbeHint;
+    println(reverse)
+    if(stueck.length > 0 && lastDown.x != -1)
+    {
+      if (hintTon.start < stueck(0).start)
+      {
+
+      } else
+      {
+        def rek(i: Int): Unit =
+        {
+         if(reverse(i).start < hintTon.start)
+           {
+             val ton = reverse(i)
+println("Ton: " + ton.start + "|" + ton.laenge)
+             println("hintTon: " + hintTon.start)
+             if(ton.start+ton.laenge == hintTon.start)
+             {
+               ctx.beginPath
+               ctx.moveTo(getXKoordinateZumZeichnen(ton.start + ton.laenge), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start))
+               ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+               ctx.stroke
+             }
+                 ctx.beginPath
+                 ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+                 ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+                 ctx.stroke
+
+
+             if(i > 0  && hintTon.start + hintTon.laenge == reverse(i-1).start)
+               {
+               ctx.beginPath
+               ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+               ctx.lineTo(getXKoordinateZumZeichnen(reverse(i-1).start), getYKoordinateZumZeichnenAusTon(reverse(i-1))+ zeilenAbstand(reverse(i-1).start))
+                 ctx.stroke
+               }
+
+
+           }else
+           {
+             rek(i+1)
+           }
+
+        }
+        rek(0)
+      }
+    }
+
+  }
+
   def getNaechstesX(x: Int): Int =
   {
     val temp = math.max(math.min(laenge + randSeite, x), randSeite + emptySpace)
@@ -343,8 +416,8 @@ object Project
 
     val schlaegeProZeile = (laenge - emptySpace) / intervall
     //ab dem ersten Schlag
-    println("zeile: " + zeile)
-    println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
+  //  println("zeile: " + zeile)
+   // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
     (getNaechstesX(x) - randSeite - emptySpace) / intervall + 1 + zeile * schlaegeProZeile
 
   }
@@ -362,12 +435,12 @@ object Project
 
   }
 
-  def getYCoordinateCanvas(y: Int): Int =
+  def getYCoordinateFromCanvas(y: Int): Int =
   {
     y - canvas.offsetTop.toInt
   }
 
-  def getXCoordinateCanvas(x: Int): Int =
+  def getXCoordinateFromCanvas(x: Int): Int =
   {
     x - canvas.offsetLeft.toInt
   }
@@ -411,18 +484,19 @@ object Project
     ((schlag - 1) / schlaegeProZeile).toInt
   }
 
-  def existiertDirekterVorgaengerTon(ton : Ton): Boolean =
+  def existiertDirekterVorgaengerTon(ton: Ton): Boolean =
   {
-      def rek(i : Int): Boolean =
+    def rek(i: Int): Boolean =
     {
-      if(i == stueck.length)
-        {
-          false
-        }else
-        {
-          if(ton.start == stueck(i).start + stueck(i).laenge) true else rek(i+1)
-        }
+      if (i == stueck.length)
+      {
+        false
+      } else
+      {
+        if (ton.start == stueck(i).start + stueck(i).laenge) true else rek(i + 1)
+      }
     }
+
     rek(0)
 
   }
