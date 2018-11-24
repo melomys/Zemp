@@ -44,13 +44,13 @@ object Project
   val farbeHint = "#0000ff"
 
   //laenge der linie
-  var laenge = 0;
+  var laengeHorizontalLinie = 0;
   //platz zwischen erstem schlag und linienbeginn
   var emptySpace = 0
 
 
   var lastDown = Pointt(-1, -1)
-  var hintTon = Ton("Dummy", -1, -1)
+  var hintTon = Ton("C", 0, 0)
 
   import monix.execution._
   import monix.reactive._
@@ -159,8 +159,8 @@ object Project
 
     canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
-    laenge = canvas.width - 2 * randSeite;
-    emptySpace = laenge - (((laenge - puffer) / intervall) - ((laenge - puffer) / intervall) % takt) * intervall
+    laengeHorizontalLinie = canvas.width - 2 * randSeite;
+    emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervall) - ((laengeHorizontalLinie - puffer) / intervall) % takt) * intervall
 
 
   }
@@ -249,7 +249,7 @@ object Project
     var lastPoint = Pointt(0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     zeichneHinterGrund()
-    val schlaegeProZeile = (laenge - emptySpace) / intervall
+    val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
 
     ctx.lineWidth = 2
     ctx.strokeStyle = farbeErsteStimme
@@ -319,16 +319,16 @@ object Project
         ctx.beginPath()
 
         ctx.moveTo(randSeite, randOben + i * abstandToene + zeile * zeilenHoehe)
-        ctx.lineTo(randSeite + laenge, randOben + i * abstandToene + zeile * zeilenHoehe)
+        ctx.lineTo(randSeite + laengeHorizontalLinie, randOben + i * abstandToene + zeile * zeilenHoehe)
         ctx.stroke()
       }
-      for (i <- 0 to (laenge - emptySpace) / intervall)
+      for (i <- 0 to (laengeHorizontalLinie - emptySpace) / intervall)
       {
 
         ctx.beginPath()
         if (i % takt == 0) ctx.lineWidth = 2 else ctx.lineWidth = 1
-        ctx.moveTo(randSeite + laenge - i * intervall, randOben + zeile * zeilenHoehe)
-        ctx.lineTo(randSeite + laenge - i * intervall, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
+        ctx.moveTo(randSeite + laengeHorizontalLinie - i * intervall, randOben + zeile * zeilenHoehe)
+        ctx.lineTo(randSeite + laengeHorizontalLinie - i * intervall, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
         ctx.stroke()
       }
     }
@@ -339,21 +339,40 @@ object Project
   {
     val reverse = stueck.reverse
     ctx.strokeStyle = farbeHint;
-    println(reverse)
-    if(lastDown.x != -1)
+    if(lastDown.x != -1 && hintTon.laenge > 0)
     {
-//      if(stueck.length == 0)
-//        {
-//          ctx.beginPath
-//          val start = getSchlagpunkt(lastDown.x, lastDown.y)
-//          val laenge = getSchlagpunkt(x, y) - start
-//          val note = getNote(y)
-//          ctx.moveTo
-//        }
+val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
+      val start = hintTon.start
+
+      val laenge = hintTon.laenge
       ctx.beginPath
-      ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-      ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-      ctx.stroke
+      ctx.moveTo(getXKoordinateZumZeichnenAusTon(hintTon), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+
+      //zeile ist immer die relative zeile zum startschlag
+      def rek(zeile: Int): Unit =
+      {
+
+        if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+        {
+          var restSchlaege = start % schlaegeProZeile
+          if (restSchlaege == 0) restSchlaege = schlaegeProZeile
+          ctx.lineTo(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+          ctx.stroke
+        }
+        else
+        {
+          ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+          ctx.stroke
+          //dom.window.alert("hallo")
+          ctx.beginPath
+          ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
+          rek(zeile + 1)
+        }
+      }
+
+      rek(0)
+
+
       if(stueck.length > 0)
       {
         if (hintTon.start < stueck(0).start)
@@ -370,7 +389,7 @@ object Project
         {
 
 
-          def rek(i: Int): Unit =
+          def rek2(i: Int): Unit =
           {
             if (reverse(i).start < hintTon.start)
             {
@@ -393,27 +412,28 @@ object Project
 
             } else
             {
-              rek(i + 1)
+              rek2(i + 1)
             }
 
           }
 
-          rek(0)
+          rek2(0)
         }
 
       }
     }
+    println("2")
 
   }
 
   def getNaechstesX(x: Int): Int =
   {
-    val temp = math.max(math.min(laenge + randSeite, x), randSeite + emptySpace)
+    val temp = math.max(math.min(laengeHorizontalLinie + randSeite, x), randSeite + emptySpace)
     //abStartPoint beschreibt die Pixelanzahl im verhältnis zum ersten Schlag
     var abStartPoint = temp - randSeite - emptySpace
     //stellt sicher, dass das resultierende x im gültigen bereich liegt
     abStartPoint = math.max(0, abStartPoint)
-    abStartPoint = math.min(abStartPoint, laenge - emptySpace)
+    abStartPoint = math.min(abStartPoint, laengeHorizontalLinie - emptySpace)
     val rest = abStartPoint % intervall;
     if (rest < intervall / 2) temp - rest else x + intervall - rest
   }
@@ -432,7 +452,7 @@ object Project
   {
     val zeile: Int = (y - randOben) / zeilenHoehe
 
-    val schlaegeProZeile = (laenge - emptySpace) / intervall
+    val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
     //ab dem ersten Schlag
   //  println("zeile: " + zeile)
    // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
@@ -465,7 +485,7 @@ object Project
 
   def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
-    val schlaegeProZeile = ((laenge - emptySpace) / intervall)
+    val schlaegeProZeile = ((laengeHorizontalLinie - emptySpace) / intervall)
     val moduloSchlag = ton.start % schlaegeProZeile
     getXKoordinateZumZeichnen(if (moduloSchlag == 0) schlaegeProZeile else moduloSchlag)
 
@@ -498,7 +518,7 @@ object Project
 
   def getZeile(schlag: Double): Int =
   {
-    val schlaegeProZeile = (laenge - emptySpace) / intervall
+    val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
     ((schlag - 1) / schlaegeProZeile).toInt
   }
 
