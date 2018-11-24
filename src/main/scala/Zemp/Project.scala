@@ -340,49 +340,67 @@ object Project
     val reverse = stueck.reverse
     ctx.strokeStyle = farbeHint;
     println(reverse)
-    if(stueck.length > 0 && lastDown.x != -1)
+    if(lastDown.x != -1)
     {
-      if (hintTon.start < stueck(0).start)
+//      if(stueck.length == 0)
+//        {
+//          ctx.beginPath
+//          val start = getSchlagpunkt(lastDown.x, lastDown.y)
+//          val laenge = getSchlagpunkt(x, y) - start
+//          val note = getNote(y)
+//          ctx.moveTo
+//        }
+      ctx.beginPath
+      ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+      ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+      ctx.stroke
+      if(stueck.length > 0)
       {
-
-      } else
-      {
-        def rek(i: Int): Unit =
+        if (hintTon.start < stueck(0).start)
         {
-         if(reverse(i).start < hintTon.start)
-           {
-             val ton = reverse(i)
-println("Ton: " + ton.start + "|" + ton.laenge)
-             println("hintTon: " + hintTon.start)
-             if(ton.start+ton.laenge == hintTon.start)
-             {
-               ctx.beginPath
-               ctx.moveTo(getXKoordinateZumZeichnen(ton.start + ton.laenge), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start))
-               ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-               ctx.stroke
-             }
-                 ctx.beginPath
-                 ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-                 ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-                 ctx.stroke
+
+          if(hintTon.start+hintTon.laenge == stueck(0).start)
+            {
+              ctx.beginPath
+              ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon)+ zeilenAbstand(hintTon.start + hintTon.laenge))
+              ctx.lineTo(getXKoordinateZumZeichnen(stueck(0).start),getYKoordinateZumZeichnenAusTon(stueck(0))+zeilenAbstand(stueck(0).start))
+              ctx.stroke
+            }
+        } else
+        {
 
 
-             if(i > 0  && hintTon.start + hintTon.laenge == reverse(i-1).start)
-               {
-               ctx.beginPath
-               ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge),getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
-               ctx.lineTo(getXKoordinateZumZeichnen(reverse(i-1).start), getYKoordinateZumZeichnenAusTon(reverse(i-1))+ zeilenAbstand(reverse(i-1).start))
-                 ctx.stroke
-               }
+          def rek(i: Int): Unit =
+          {
+            if (reverse(i).start < hintTon.start)
+            {
+              val ton = reverse(i)
+              if (ton.start + ton.laenge == hintTon.start)
+              {
+                ctx.beginPath
+                ctx.moveTo(getXKoordinateZumZeichnen(ton.start + ton.laenge), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start))
+                ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+                ctx.stroke
+              }
+              if (i > 0 && hintTon.start + hintTon.laenge == reverse(i - 1).start)
+              {
+                ctx.beginPath
+                ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start+hintTon.laenge))
+                ctx.lineTo(getXKoordinateZumZeichnen(reverse(i - 1).start), getYKoordinateZumZeichnenAusTon(reverse(i - 1)) + zeilenAbstand(reverse(i - 1).start))
+                ctx.stroke
+              }
 
 
-           }else
-           {
-             rek(i+1)
-           }
+            } else
+            {
+              rek(i + 1)
+            }
 
+          }
+
+          rek(0)
         }
-        rek(0)
+
       }
     }
 
