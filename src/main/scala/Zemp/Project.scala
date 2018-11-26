@@ -191,7 +191,10 @@ object Project
       val y = getYCoordinateFromCanvas(e.clientY.toInt)
       if (lastDown.x == -1)
       {
-        lastDown = Pointt(x, y)
+        val start = getSchlagpunkt(x,y)
+        val ton = Ton("TesteObLastDownGueltigSeinKann",start,0)
+        if(isValid(ton)) lastDown = Pointt(x, y) else lastDown.x == -1
+
 
       } else
       {
@@ -206,18 +209,24 @@ object Project
 
         val laenge = getSchlagpunkt(x, y) - start
 
-        stueck.append(Ton(note, start, laenge))
-        stueck = stueck.sortWith((A, B: Ton) => A.start < B.start)
-        //  println(stueck)
 
-        // println("Ton: (" + note + "|" + start + "|" + laenge + ")")
-        hintTon = Ton(note, start + laenge, 0)
-
-        // für kein kontinuierliches Ziehen die Kommentierung der beiden folgenden Zeilen tauschen
-        lastDown = Pointt(x, y)
-        //   lastDown = Point(-1,-1)
+        val ton = Ton(note, start, laenge)
 
 
+        if (isValid(ton))
+        {
+          stueck.append(ton)
+          stueck = stueck.sortWith((A, B: Ton) => A.start < B.start)
+          //  println(stueck)
+
+          hintTon = Ton(note, start + laenge, 0)
+
+
+          // für kein kontinuierliches Ziehen die Kommentierung der beiden folgenden Zeilen tauschen
+          lastDown = Pointt(x, y)
+          //   lastDown = Point(-1,-1)
+
+        }
       }
 
     }
@@ -236,8 +245,54 @@ object Project
         val laenge = getSchlagpunkt(x, y) - start
 
         hintTon = Ton(note, start, laenge)
+        if(!isValid(hintTon)) hintTon = Ton(note,start,0)
 
       }
+    }
+
+    def isValid(ton: Ton): Boolean =
+    {
+      if (ton.laenge <= 0 && !ton.hoehe.equals("TesteObLastDownGueltigSeinKann")) return false
+      if(stueck.length == 0) return true
+
+      def rek(i: Int): Boolean =
+      {
+        println(stueck)
+        if (i == stueck.length) {
+
+          if(stueck(stueck.length - 1).start + stueck(stueck.length-1).laenge > ton.start) return false
+          return true;
+        }
+        if (ton.start == stueck(i).start)
+        {
+          return false
+        }
+        else if (ton.start < stueck(i).start)
+        {
+          if( i > 0 && stueck(i-1).start + stueck(i-1).laenge > ton.start) return false
+          if(ton.start + ton.laenge > stueck(i).start) return false
+          return true
+        }else{
+          rek(i+1)
+        }
+
+      }
+
+
+      rek(0)
+
+//      for(i <- 0 to stueck.length)
+//        {
+//            if(ton.start == stueck(i).start) return false
+//            if(ton.start < stueck(i).start)
+//              {
+//                if(ton.start + ton.laenge > stueck(i).start) return false
+//                return true
+//              }
+//        }
+//      return true
+
+
     }
   }
 
@@ -338,10 +393,8 @@ object Project
   {
     val reverse = stueck.reverse
     ctx.strokeStyle = farbeHint;
-    println(0)
     if (lastDown.x != -1 && hintTon.laenge > 0)
     {
-      println(1)
       val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / intervall
       val start = hintTon.start
 
@@ -373,7 +426,6 @@ object Project
 
       rek(0)
 
-      println(2)
       if (stueck.length > 0)
       {
         if (hintTon.start < stueck(0).start)
@@ -389,13 +441,9 @@ object Project
         } else
         {
 
-          println(2.1)
 
           def rek2(i: Int): Unit =
           {
-            println(2.2 + " " + i)
-            println(reverse)
-            println("HintTon: " + hintTon)
             if (reverse(i).start < hintTon.start)
             {
 
@@ -424,7 +472,6 @@ object Project
           }
 
           rek2(0)
-          println(3)
         }
 
       }
