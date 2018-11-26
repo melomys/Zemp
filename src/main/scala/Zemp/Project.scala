@@ -28,14 +28,16 @@ object Project
   val intervallViertel = 32
   val aktuelleNotenLaenge = intervallViertel
 
-  val abstandToene = intervallViertel/2
+  val abstandToene = intervallViertel / 2
   val zeilenAnzahl = 4
 
   val randOben = 5 * abstandToene
   val randSeite = 50
   val puffer = intervallViertel / 2
 
-  val zeilenHoehe = (tones.length - 1) * abstandToene + 3 * abstandToene
+
+  val zeilenAbstand = 3 * abstandToene
+  val zeilenHoehe = (tones.length - 1) * abstandToene + zeilenAbstand
 
   val fontHeight = 15
   val font = fontHeight + "pt Calibri"
@@ -193,9 +195,9 @@ object Project
       val y = getYCoordinateFromCanvas(e.clientY.toInt)
       if (lastDown.x == -1)
       {
-        val start = getSchlagpunkt(x,y)
-        val ton = Ton("TesteObLastDownGueltigSeinKann",start,0)
-        if(isValid(ton)) lastDown = Pointt(x, y) else lastDown.x == -1
+        val start = getSchlagpunkt(x, y)
+        val ton = Ton("TesteObLastDownGueltigSeinKann", start, 0)
+        if (isValid(ton)) lastDown = Pointt(x, y) else lastDown.x == -1
 
 
       } else
@@ -207,7 +209,7 @@ object Project
         //start ist der letzte Punkt an dem eine Note hinzugefuegt worden ist
         val start = getSchlagpunkt(lastDown.x, lastDown.y)
         //note kriegt den String zugewiesen auf den geklickt wurde
-        val note = getNote(y)
+        val note = getNote(y,start)
 
         val laenge = getSchlagpunkt(x, y) - start
 
@@ -242,12 +244,12 @@ object Project
 
         val start = getSchlagpunkt(lastDown.x, lastDown.y)
         //note kriegt den String zugewiesen auf den geklickt wurde
-        val note = getNote(y)
+        val note = getNote(y,start)
 
         val laenge = getSchlagpunkt(x, y) - start
 
         hintTon = Ton(note, start, laenge)
-        if(!isValid(hintTon)) hintTon = Ton(note,start,0)
+        if (!isValid(hintTon)) hintTon = Ton(note, start, 0)
 
       }
     }
@@ -255,14 +257,15 @@ object Project
     def isValid(ton: Ton): Boolean =
     {
       if (ton.laenge <= 0 && !ton.hoehe.equals("TesteObLastDownGueltigSeinKann")) return false
-      if(stueck.length == 0) return true
+      if (stueck.length == 0) return true
 
       def rek(i: Int): Boolean =
       {
         println(stueck)
-        if (i == stueck.length) {
+        if (i == stueck.length)
+        {
 
-          if(stueck(stueck.length - 1).start + stueck(stueck.length-1).laenge > ton.start) return false
+          if (stueck(stueck.length - 1).start + stueck(stueck.length - 1).laenge > ton.start) return false
           return true;
         }
         if (ton.start == stueck(i).start)
@@ -271,11 +274,12 @@ object Project
         }
         else if (ton.start < stueck(i).start)
         {
-          if( i > 0 && stueck(i-1).start + stueck(i-1).laenge > ton.start) return false
-          if(ton.start + ton.laenge > stueck(i).start) return false
+          if (i > 0 && stueck(i - 1).start + stueck(i - 1).laenge > ton.start) return false
+          if (ton.start + ton.laenge > stueck(i).start) return false
           return true
-        }else{
-          rek(i+1)
+        } else
+        {
+          rek(i + 1)
         }
 
       }
@@ -283,16 +287,16 @@ object Project
 
       rek(0)
 
-//      for(i <- 0 to stueck.length)
-//        {
-//            if(ton.start == stueck(i).start) return false
-//            if(ton.start < stueck(i).start)
-//              {
-//                if(ton.start + ton.laenge > stueck(i).start) return false
-//                return true
-//              }
-//        }
-//      return true
+      //      for(i <- 0 to stueck.length)
+      //        {
+      //            if(ton.start == stueck(i).start) return false
+      //            if(ton.start < stueck(i).start)
+      //              {
+      //                if(ton.start + ton.laenge > stueck(i).start) return false
+      //                return true
+      //              }
+      //        }
+      //      return true
 
 
     }
@@ -436,7 +440,7 @@ object Project
 
           if (hintTon.start + hintTon.laenge == stueck(0).start)
           {
-            var moduloSchlaege = (start+laenge)%schlaegeProZeile
+            var moduloSchlaege = (start + laenge) % schlaegeProZeile
             if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
             ctx.beginPath
             ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
@@ -455,8 +459,8 @@ object Project
               val ton = reverse(i)
               if (ton.start + ton.laenge == hintTon.start)
               {
-                var moduloSchlaege = (start)%schlaegeProZeile
-            if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
+                var moduloSchlaege = (start) % schlaegeProZeile
+                if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
                 ctx.beginPath
                 ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start + ton.laenge))
                 ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
@@ -464,8 +468,8 @@ object Project
               }
               if (i > 0 && hintTon.start + hintTon.laenge == reverse(i - 1).start)
               {
-                var moduloSchlaege = (start+laenge)%schlaegeProZeile
-            if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
+                var moduloSchlaege = (start + laenge) % schlaegeProZeile
+                if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
                 ctx.beginPath
                 ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
                 ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(reverse(i - 1)) + zeilenAbstand(reverse(i - 1).start))
@@ -510,11 +514,31 @@ object Project
 
   }
 
-  def getSchlagpunkt(x: Int, y: Int): Int =
+  def getSchlagpunkt(x: Int, y: Int): Double =
   {
-    val zeile: Int = (y - randOben) / zeilenHoehe
+    //rule
+    // 1. wenn sich der schlag auf dem grid befindet, nimm diese Zeile
+    // 2. zeile vom chronologisch vorherigem, bei 0 Elementen 1 Zeile
+    // 3. falls sich der klick zu tief ist, immer die Zeile nehmen, bei der es ein tiefer ton ist
 
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
+    var zeile : Int = (y - randOben) / zeilenHoehe
+    val zeilenRest = (y - randOben) % zeilenHoehe
+    //klick war nicht auf dem Grid
+    if (zeilenRest > (zeilenHoehe - zeilenAbstand))
+    {
+       if(stueck.length > 0)
+         {
+
+           //nur der pseudovorgaenger, geht davon aus dass nur kontinuierlich geklickt wurde
+           // wenn hier ein zwischenschritt hinzugefügt wird funktioniert das hier noch nicht
+           val endeVonVorgaenger = stueck.last.start + stueck.last.laenge
+           val zeileVonEndeVonVorgaenger = (endeVonVorgaenger/schlaegeProZeile).toInt
+           if(zeileVonEndeVonVorgaenger == zeile + 1) zeile = zeile +1
+         }
+
+    }
+
     //ab dem ersten Schlag
     //  println("zeile: " + zeile)
     // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
@@ -522,13 +546,18 @@ object Project
 
   }
 
-  def getNote(y: Int): String =
+  def getNote(y: Int, schlag : Double): String =
   {
     //anzahl der toene ab dem höchsten möglichen Ton pro Zeile
+    val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
+    val imVerhaeltnisZuErstemTonImSchlag = ((getNaechstesY(y))- randOben) - (schlag/schlaegeProZeile).toInt*zeilenHoehe
+    println("zeile: " + (schlag/schlaegeProZeile).toInt)
+println("imVerhaeltnis: " + imVerhaeltnisZuErstemTonImSchlag)
 
-    //manchmal +1 nach abstandToene manchmal nicht >: aber wahrscheinlich nicht
-    val temp = ((getNaechstesY(y) - randOben) / abstandToene) % (zeilenHoehe / abstandToene)
+    //val temp = ((getNaechstesY(y) - randOben) / abstandToene) % (zeilenHoehe / abstandToene)
+      val temp = (imVerhaeltnisZuErstemTonImSchlag/abstandToene).toInt % (zeilenHoehe/abstandToene)
 
+    println("temp: " + temp)
     //wenn temp im bereich von tones liegt, kann direkt der ton String gespeichert werden
     if (temp >= 0 && temp < tones.length) tones(temp) else temp.toString
 
