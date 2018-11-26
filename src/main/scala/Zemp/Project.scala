@@ -26,7 +26,7 @@ object Project
 
 
   val intervallViertel = 32
-  val aktuelleNotenLaenge = intervallViertel/4
+  val aktuelleNotenLaenge = intervallViertel
 
   val abstandToene = intervallViertel/2
   val zeilenAnzahl = 4
@@ -408,6 +408,7 @@ object Project
       def rek(zeile: Int): Unit =
       {
 
+
         if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
         {
           var restSchlaege = start % schlaegeProZeile
@@ -435,9 +436,11 @@ object Project
 
           if (hintTon.start + hintTon.laenge == stueck(0).start)
           {
+            var moduloSchlaege = (start+laenge)%schlaegeProZeile
+            if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
             ctx.beginPath
-            ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
-            ctx.lineTo(getXKoordinateZumZeichnen(stueck(0).start), getYKoordinateZumZeichnenAusTon(stueck(0)) + zeilenAbstand(stueck(0).start))
+            ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
+            ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(stueck(0)) + zeilenAbstand(stueck(0).start))
             ctx.stroke
           }
         } else
@@ -452,16 +455,20 @@ object Project
               val ton = reverse(i)
               if (ton.start + ton.laenge == hintTon.start)
               {
+                var moduloSchlaege = (start)%schlaegeProZeile
+            if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
                 ctx.beginPath
-                ctx.moveTo(getXKoordinateZumZeichnen(ton.start + ton.laenge), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start))
-                ctx.lineTo(getXKoordinateZumZeichnen(hintTon.start), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
+                ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(ton) + zeilenAbstand(ton.start + ton.laenge))
+                ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start))
                 ctx.stroke
               }
               if (i > 0 && hintTon.start + hintTon.laenge == reverse(i - 1).start)
               {
+                var moduloSchlaege = (start+laenge)%schlaegeProZeile
+            if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
                 ctx.beginPath
-                ctx.moveTo(getXKoordinateZumZeichnen(hintTon.start + hintTon.laenge), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
-                ctx.lineTo(getXKoordinateZumZeichnen(reverse(i - 1).start), getYKoordinateZumZeichnenAusTon(reverse(i - 1)) + zeilenAbstand(reverse(i - 1).start))
+                ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
+                ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(reverse(i - 1)) + zeilenAbstand(reverse(i - 1).start))
                 ctx.stroke
               }
 
@@ -549,9 +556,9 @@ object Project
   def getYKoordinateZumZeichnenAusTon(ton: Ton): Int =
   {
 
-    var y = tones.indexOf(ton.hoehe)
-    if (y == -1) y = ton.hoehe.toInt
-    randOben + abstandToene * y
+    var index = tones.indexOf(ton.hoehe)
+    if (index == -1) index = ton.hoehe.toInt
+    randOben + abstandToene * index
 
   }
 
