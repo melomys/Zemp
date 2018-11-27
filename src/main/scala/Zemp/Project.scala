@@ -209,11 +209,11 @@ object Project
         //start ist der letzte Punkt an dem eine Note hinzugefuegt worden ist
         val start = getSchlagpunkt(lastDown.x, lastDown.y)
         //note kriegt den String zugewiesen auf den geklickt wurde
-        val note = getNote(y,start)
+
 
         val laenge = getSchlagpunkt(x, y) - start
 
-
+        val note = getNote(y, start)
         val ton = Ton(note, start, laenge)
 
 
@@ -243,10 +243,10 @@ object Project
         val y = getYCoordinateFromCanvas(e.clientY.toInt)
 
         val start = getSchlagpunkt(lastDown.x, lastDown.y)
-        //note kriegt den String zugewiesen auf den geklickt wurde
-        val note = getNote(y,start)
-
         val laenge = getSchlagpunkt(x, y) - start
+        //note kriegt den String zugewiesen auf den geklickt wurde
+        val note = getNote(y, start)
+
 
         hintTon = Ton(note, start, laenge)
         if (!isValid(hintTon)) hintTon = Ton(note, start, 0)
@@ -522,42 +522,53 @@ object Project
     // 3. falls sich der klick zu tief ist, immer die Zeile nehmen, bei der es ein tiefer ton ist
 
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
-    var zeile : Int = (y - randOben) / zeilenHoehe
+    var zeile: Int = (y - randOben) / zeilenHoehe
     val zeilenRest = (y - randOben) % zeilenHoehe
+
     //klick war nicht auf dem Grid
     if (zeilenRest > (zeilenHoehe - zeilenAbstand))
     {
-       if(stueck.length > 0)
-         {
-
-           //nur der pseudovorgaenger, geht davon aus dass nur kontinuierlich geklickt wurde
-           // wenn hier ein zwischenschritt hinzugefügt wird funktioniert das hier noch nicht
-           val endeVonVorgaenger = stueck.last.start + stueck.last.laenge
-           val zeileVonEndeVonVorgaenger = (endeVonVorgaenger/schlaegeProZeile).toInt
-           if(zeileVonEndeVonVorgaenger == zeile + 1) zeile = zeile +1
-         }
+      if (stueck.length > 0)
+      {
+        println("zeileDavor: " + zeile)
+        //nur der pseudovorgaenger, geht davon aus dass nur kontinuierlich geklickt wurde
+        // wenn hier ein zwischenschritt hinzugefügt wird funktioniert das hier noch nicht
+        val endeVonVorgaenger = stueck.last.start + stueck.last.laenge
+        val zeileVonEndeVonVorgaenger = ((endeVonVorgaenger - 1) / schlaegeProZeile).toInt
+        println("zeileVonVorgaenger: " + zeileVonEndeVonVorgaenger)
+        if (zeileVonEndeVonVorgaenger == zeile + 1)
+        {
+          zeile = zeile + 1
+        }
+        else if (zeileVonEndeVonVorgaenger == zeile + 2 && endeVonVorgaenger % schlaegeProZeile == 1)
+        {
+          zeile = zeile + 1
+        }
+        println("zeileDanach: " + zeile)
+      }
 
     }
 
     //ab dem ersten Schlag
     //  println("zeile: " + zeile)
     // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
-    (getNaechstesX(x) - randSeite - emptySpace) / aktuelleNotenLaenge + 1 + zeile * schlaegeProZeile
 
+    val min = zeile * schlaegeProZeile + 1
+    val schlagPunkt = (getNaechstesX(x) - randSeite - emptySpace) / aktuelleNotenLaenge + 1 + zeile * schlaegeProZeile
+    println("schlagPunkt: " + schlagPunkt)
+    println("max: " + math.max(min, schlagPunkt))
+    math.max(min, schlagPunkt)
   }
 
-  def getNote(y: Int, schlag : Double): String =
+  def getNote(y: Int, schlag: Double): String =
   {
     //anzahl der toene ab dem höchsten möglichen Ton pro Zeile
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
-    val imVerhaeltnisZuErstemTonImSchlag = ((getNaechstesY(y))- randOben) - (schlag/schlaegeProZeile).toInt*zeilenHoehe
-    println("zeile: " + (schlag/schlaegeProZeile).toInt)
-println("imVerhaeltnis: " + imVerhaeltnisZuErstemTonImSchlag)
+    val imVerhaeltnisZuErstemTonImSchlag = ((getNaechstesY(y)) - randOben) - (((schlag - 1) / schlaegeProZeile).toInt * zeilenHoehe)
 
     //val temp = ((getNaechstesY(y) - randOben) / abstandToene) % (zeilenHoehe / abstandToene)
-      val temp = (imVerhaeltnisZuErstemTonImSchlag/abstandToene).toInt % (zeilenHoehe/abstandToene)
+    val temp = (imVerhaeltnisZuErstemTonImSchlag / abstandToene).toInt % (zeilenHoehe / abstandToene)
 
-    println("temp: " + temp)
     //wenn temp im bereich von tones liegt, kann direkt der ton String gespeichert werden
     if (temp >= 0 && temp < tones.length) tones(temp) else temp.toString
 
