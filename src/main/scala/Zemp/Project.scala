@@ -530,12 +530,10 @@ object Project
     {
       if (stueck.length > 0)
       {
-        println("zeileDavor: " + zeile)
         //nur der pseudovorgaenger, geht davon aus dass nur kontinuierlich geklickt wurde
         // wenn hier ein zwischenschritt hinzugefügt wird funktioniert das hier noch nicht
         val endeVonVorgaenger = stueck.last.start + stueck.last.laenge
         val zeileVonEndeVonVorgaenger = ((endeVonVorgaenger - 1) / schlaegeProZeile).toInt
-        println("zeileVonVorgaenger: " + zeileVonEndeVonVorgaenger)
         if (zeileVonEndeVonVorgaenger == zeile + 1)
         {
           zeile = zeile + 1
@@ -544,7 +542,6 @@ object Project
         {
           zeile = zeile + 1
         }
-        println("zeileDanach: " + zeile)
       }
 
     }
@@ -553,11 +550,8 @@ object Project
     //  println("zeile: " + zeile)
     // println("schlagpunkt: " + ((getNaechstesX(x) - randSeite - emptySpace) / intervall + 1))
 
-    val min = zeile * schlaegeProZeile + 1
     val schlagPunkt = (getNaechstesX(x) - randSeite - emptySpace) / aktuelleNotenLaenge + 1 + zeile * schlaegeProZeile
-    println("schlagPunkt: " + schlagPunkt)
-    println("max: " + math.max(min, schlagPunkt))
-    math.max(min, schlagPunkt)
+    schlagPunkt
   }
 
   def getNote(y: Int, schlag: Double): String =
