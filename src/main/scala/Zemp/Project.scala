@@ -10,7 +10,7 @@ import scala.scalajs.js.annotation.JSExport
 
 case class Pointt(x: Int, y: Int)
 
-case class Ton(hoehe: String, start: Double, laenge: Double)
+case class Ton(hoehe: String, start: Double, laenge: Double, gesang: String = "jo")
 
 @JSExport
 object Project
@@ -26,7 +26,7 @@ object Project
 
 
   val intervallViertel = 32
-  val aktuelleNotenLaenge = intervallViertel
+  val aktuelleNotenLaenge = intervallViertel / 4
 
   val abstandToene = intervallViertel / 2
   val zeilenAnzahl = 4
@@ -44,9 +44,9 @@ object Project
   val fontStyle = "#101010"
 
   val farbeHintergrund = "#d0d0d0"
- // val farbeErsteStimme = "#DD1E1ECC"
+  // val farbeErsteStimme = "#DD1E1ECC"
 
-  val stimmenFarben = Array("#DD1E1ECC","#ff0000","#ffff00")
+  val stimmenFarben = Array("#DD1E1ECC", "#ff0000", "#ffff00")
   val farbeHint = "#0000ff"
 
   //laenge der linie
@@ -186,9 +186,7 @@ object Project
 
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
-
-      //  println("MouseDown on: (" + e.clientX + "/" + e.clientY + ")")
-      getNaechstesX(e.clientX.toInt)
+      //teste ob sich unter klick ein Ton befindet
     }
     canvas.onmouseup = (e: dom.MouseEvent) =>
     {
@@ -222,7 +220,7 @@ object Project
         if (isValid(ton))
         {
           aktuelleStimme.append(ton)
-          for(i  <- 0 to stueck.length - 1)
+          for (i <- 0 to stueck.length - 1)
           {
             if (aktuelleStimme.equals(stueck(i)))
             {
@@ -303,6 +301,7 @@ object Project
     stimmenSpinner.onmouseup = (e: dom.MouseEvent) =>
     {
       aktuelleStimme = stueck(stimmenSpinner.value.toInt - 1)
+      lastDown = Pointt(-1, -1)
 
     }
   }
@@ -319,11 +318,11 @@ object Project
     ctx.lineWidth = 2
 
     println("aktuelleStimme: " + aktuelleStimme)
-    for(stimmenIndex <- 0 to stueck.length -1)
+    for (stimmenIndex <- 0 to stueck.length - 1)
     {
       val stimme = stueck(stimmenIndex)
       ctx.strokeStyle = stimmenFarben(stimmenIndex)
-        println(stimme)
+      println(stimme)
       for (i <- 0 to stimme.length - 1)
       {
 
@@ -332,12 +331,30 @@ object Project
         val laenge = stimme(i).laenge
 
 
-        if (existiertDirekterVorgaengerTon(stimme(i),stimme))
+        if (existiertDirekterVorgaengerTon(stimme(i), stimme))
         {
           ctx.beginPath
           ctx.moveTo(lastPoint.x, lastPoint.y)
           ctx.lineTo(lastPoint.x, getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
           ctx.stroke
+        }
+
+        //zeichne Gesang
+        var gesangSchonGezeichnet = false
+
+        if (i > 0)
+        {
+          val hoeheVorgaenger = if(tones.indexOf(stimme(i-1).hoehe) != -1) tones.indexOf(stimme(i-1).hoehe) else stimme(i-1).hoehe.toInt
+          val hoeheVonAktuellem= if(tones.indexOf(stimme(i).hoehe) != -1) tones.indexOf(stimme(i).hoehe) else stimme(i).hoehe.toInt
+          if(hoeheVorgaenger < hoeheVonAktuellem)
+            {
+              gesangSchonGezeichnet = true
+              ctx.fillText(stimme(i).gesang, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) +1.2 * fontHeight)
+            }
+
+        }
+        if(!gesangSchonGezeichnet){
+          ctx.fillText(stimme(i).gesang, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) -0.5 * fontHeight)
         }
         ctx.beginPath
         ctx.moveTo(getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
@@ -386,9 +403,11 @@ object Project
         ctx.fillStyle = fontStyle
         ctx.lineWidth = 1
 
-        ctx.fillText(tones(i), randSeite - 30, randOben + i * abstandToene + zeile * zeilenHoehe + fontHeight / 2)
-        ctx.beginPath()
 
+        ctx.fillText(tones(i), randSeite - 30, randOben + i * abstandToene + zeile * zeilenHoehe + fontHeight / 2)
+
+
+        ctx.beginPath()
         ctx.moveTo(randSeite, randOben + i * abstandToene + zeile * zeilenHoehe)
         ctx.lineTo(randSeite + laengeHorizontalLinie, randOben + i * abstandToene + zeile * zeilenHoehe)
         ctx.stroke()
@@ -629,7 +648,7 @@ object Project
     ((schlag - 1) / schlaegeProZeile).toInt
   }
 
-  def existiertDirekterVorgaengerTon(ton: Ton, stimme :ArrayBuffer[Ton]): Boolean =
+  def existiertDirekterVorgaengerTon(ton: Ton, stimme: ArrayBuffer[Ton]): Boolean =
   {
     def rek(i: Int): Boolean =
     {
