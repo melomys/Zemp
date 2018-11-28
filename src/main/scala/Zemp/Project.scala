@@ -16,8 +16,8 @@ case class Ton(hoehe: String, start: Double, laenge: Double)
 object Project
 {
 
-
-  var stueck: ArrayBuffer[Ton] = ArrayBuffer()
+  var stueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton])
+  var aktuelleStimme = stueck(0)
   val tones = Array("C", "B", "Ab", "G", "F", "Eb", "D", "C1")
   val takt = 5
 
@@ -44,7 +44,9 @@ object Project
   val fontStyle = "#101010"
 
   val farbeHintergrund = "#d0d0d0"
-  val farbeErsteStimme = "#DD1E1ECC"
+ // val farbeErsteStimme = "#DD1E1ECC"
+
+  val stimmenFarben = Array("#DD1E1ECC","#ff0000","#ffff00")
   val farbeHint = "#0000ff"
 
   //laenge der linie
@@ -219,8 +221,16 @@ object Project
 
         if (isValid(ton))
         {
-          stueck.append(ton)
-          stueck = stueck.sortWith((A, B: Ton) => A.start < B.start)
+          aktuelleStimme.append(ton)
+          for(i  <- 0 to stueck.length - 1)
+          {
+            if (aktuelleStimme.equals(stueck(i)))
+            {
+              stueck(i) = aktuelleStimme.sortWith((A, B: Ton) => A.start < B.start)
+              aktuelleStimme = stueck(i)
+            }
+          }
+          //aktuelleStimme = aktuelleStimme.sortWith((A, B: Ton) => A.start < B.start)
           //  println(stueck)
 
           hintTon = Ton(note, start + laenge, 0)
@@ -257,25 +267,24 @@ object Project
     def isValid(ton: Ton): Boolean =
     {
       if (ton.laenge <= 0 && !ton.hoehe.equals("TesteObLastDownGueltigSeinKann")) return false
-      if (stueck.length == 0) return true
+      if (aktuelleStimme.length == 0) return true
 
       def rek(i: Int): Boolean =
       {
-        println(stueck)
-        if (i == stueck.length)
+        if (i == aktuelleStimme.length)
         {
 
-          if (stueck(stueck.length - 1).start + stueck(stueck.length - 1).laenge > ton.start) return false
+          if (aktuelleStimme(aktuelleStimme.length - 1).start + aktuelleStimme(aktuelleStimme.length - 1).laenge > ton.start) return false
           return true;
         }
-        if (ton.start == stueck(i).start)
+        if (ton.start == aktuelleStimme(i).start)
         {
           return false
         }
-        else if (ton.start < stueck(i).start)
+        else if (ton.start < aktuelleStimme(i).start)
         {
-          if (i > 0 && stueck(i - 1).start + stueck(i - 1).laenge > ton.start) return false
-          if (ton.start + ton.laenge > stueck(i).start) return false
+          if (i > 0 && aktuelleStimme(i - 1).start + aktuelleStimme(i - 1).laenge > ton.start) return false
+          if (ton.start + ton.laenge > aktuelleStimme(i).start) return false
           return true
         } else
         {
@@ -287,17 +296,13 @@ object Project
 
       rek(0)
 
-      //      for(i <- 0 to stueck.length)
-      //        {
-      //            if(ton.start == stueck(i).start) return false
-      //            if(ton.start < stueck(i).start)
-      //              {
-      //                if(ton.start + ton.laenge > stueck(i).start) return false
-      //                return true
-      //              }
-      //        }
-      //      return true
 
+    }
+
+    val stimmenSpinner = dom.document.getElementById("stimme").asInstanceOf[html.Select]
+    stimmenSpinner.onmouseup = (e: dom.MouseEvent) =>
+    {
+      aktuelleStimme = stueck(stimmenSpinner.value.toInt - 1)
 
     }
   }
@@ -312,53 +317,59 @@ object Project
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
 
     ctx.lineWidth = 2
-    ctx.strokeStyle = farbeErsteStimme
 
-    for (i <- 0 to stueck.length - 1)
+    println("aktuelleStimme: " + aktuelleStimme)
+    for(stimmenIndex <- 0 to stueck.length -1)
     {
-
-
-      val start = stueck(i).start
-      val laenge = stueck(i).laenge
-
-
-      if (existiertDirekterVorgaengerTon(stueck(i)))
+      val stimme = stueck(stimmenIndex)
+      ctx.strokeStyle = stimmenFarben(stimmenIndex)
+        println(stimme)
+      for (i <- 0 to stimme.length - 1)
       {
-        ctx.beginPath
-        ctx.moveTo(lastPoint.x, lastPoint.y)
-        ctx.lineTo(lastPoint.x, getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
-        ctx.stroke
-      }
-      ctx.beginPath
-      ctx.moveTo(getXKoordinateZumZeichnenAusTon(stueck(i)), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start))
 
 
-      //zeile ist immer die relative zeile zum startschlag
-      def rek(zeile: Int): Unit =
-      {
-        //  println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
+        val start = stimme(i).start
+        val laenge = stimme(i).laenge
 
-        if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+
+        if (existiertDirekterVorgaengerTon(stimme(i),stimme))
         {
-          var restSchlaege = start % schlaegeProZeile
-          if (restSchlaege == 0) restSchlaege = schlaegeProZeile
-          lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
-          ctx.lineTo(lastPoint.x, lastPoint.y)
-          ctx.stroke
-        }
-        else
-        {
-          ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
-          ctx.stroke
-          //dom.window.alert("hallo")
           ctx.beginPath
-          ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stueck(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
-          rek(zeile + 1)
+          ctx.moveTo(lastPoint.x, lastPoint.y)
+          ctx.lineTo(lastPoint.x, getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
+          ctx.stroke
         }
+        ctx.beginPath
+        ctx.moveTo(getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
+
+
+        //zeile ist immer die relative zeile zum startschlag
+        def rek(zeile: Int): Unit =
+        {
+          //  println(start + laenge - (getZeile(start) + zeile) * schlaegeProZeile + " <= schlaegeProZeile: " + schlaegeProZeile)
+
+          if (start + laenge - (getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+          {
+            var restSchlaege = start % schlaegeProZeile
+            if (restSchlaege == 0) restSchlaege = schlaegeProZeile
+            lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+            ctx.lineTo(lastPoint.x, lastPoint.y)
+            ctx.stroke
+          }
+          else
+          {
+            ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+            ctx.stroke
+            //dom.window.alert("hallo")
+            ctx.beginPath
+            ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
+            rek(zeile + 1)
+          }
+        }
+
+        rek(0)
+
       }
-
-      rek(0)
-
     }
     zeichneHint
 
@@ -397,7 +408,7 @@ object Project
 
   def zeichneHint(): Unit =
   {
-    val reverse = stueck.reverse
+    val reverse = aktuelleStimme.reverse
     ctx.strokeStyle = farbeHint;
     if (lastDown.x != -1 && hintTon.laenge > 0)
     {
@@ -433,18 +444,18 @@ object Project
 
       rek(0)
 
-      if (stueck.length > 0)
+      if (aktuelleStimme.length > 0)
       {
-        if (hintTon.start < stueck(0).start)
+        if (hintTon.start < aktuelleStimme(0).start)
         {
 
-          if (hintTon.start + hintTon.laenge == stueck(0).start)
+          if (hintTon.start + hintTon.laenge == aktuelleStimme(0).start)
           {
             var moduloSchlaege = (start + laenge) % schlaegeProZeile
             if (moduloSchlaege == 0) moduloSchlaege = schlaegeProZeile
             ctx.beginPath
             ctx.moveTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(hintTon) + zeilenAbstand(hintTon.start + hintTon.laenge))
-            ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(stueck(0)) + zeilenAbstand(stueck(0).start))
+            ctx.lineTo(getXKoordinateZumZeichnen(moduloSchlaege), getYKoordinateZumZeichnenAusTon(aktuelleStimme(0)) + zeilenAbstand(aktuelleStimme(0).start))
             ctx.stroke
           }
         } else
@@ -528,11 +539,11 @@ object Project
     //klick war nicht auf dem Grid
     if (zeilenRest > (zeilenHoehe - zeilenAbstand))
     {
-      if (stueck.length > 0)
+      if (aktuelleStimme.length > 0)
       {
         //nur der pseudovorgaenger, geht davon aus dass nur kontinuierlich geklickt wurde
         // wenn hier ein zwischenschritt hinzugefügt wird funktioniert das hier noch nicht
-        val endeVonVorgaenger = stueck.last.start + stueck.last.laenge
+        val endeVonVorgaenger = aktuelleStimme.last.start + aktuelleStimme.last.laenge
         val zeileVonEndeVonVorgaenger = ((endeVonVorgaenger - 1) / schlaegeProZeile).toInt
         if (zeileVonEndeVonVorgaenger == zeile + 1)
         {
@@ -618,16 +629,16 @@ object Project
     ((schlag - 1) / schlaegeProZeile).toInt
   }
 
-  def existiertDirekterVorgaengerTon(ton: Ton): Boolean =
+  def existiertDirekterVorgaengerTon(ton: Ton, stimme :ArrayBuffer[Ton]): Boolean =
   {
     def rek(i: Int): Boolean =
     {
-      if (i == stueck.length)
+      if (i == stimme.length)
       {
         false
       } else
       {
-        if (ton.start == stueck(i).start + stueck(i).laenge) true else rek(i + 1)
+        if (ton.start == stimme(i).start + stimme(i).laenge) true else rek(i + 1)
       }
     }
 
