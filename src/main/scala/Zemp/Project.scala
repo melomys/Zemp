@@ -10,7 +10,7 @@ import scala.scalajs.js.annotation.JSExport
 
 case class Pointt(x: Int, y: Int)
 
-case class Ton(hoehe: String, start: Double, laenge: Double, gesang: String = "jo")
+case class Ton(hoehe: String, start: Double, laenge: Double, text: String = "jo")
 
 @JSExport
 object Project
@@ -23,7 +23,9 @@ object Project
 
   var canvas: html.Canvas = null
   var ctx: dom.CanvasRenderingContext2D = null
+  var textFeld: html.Input = null
 
+  var textFeldIndex = -1
 
   val intervallViertel = 32
   val aktuelleNotenLaenge = intervallViertel / 4
@@ -42,6 +44,9 @@ object Project
   val fontHeight = 15
   val font = fontHeight + "pt Calibri"
   val fontStyle = "#101010"
+  val fontHeightText = 12
+  val fontText = fontHeightText + "pt Calibri"
+  val fontBoldText = "bold " + fontText
 
   val farbeHintergrund = "#d0d0d0"
   // val farbeErsteStimme = "#DD1E1ECC"
@@ -57,6 +62,7 @@ object Project
 
   var lastDown = Pointt(-1, -1)
   var hintTon = Ton("C", 0, 0)
+
 
   import monix.execution._
   import monix.reactive._
@@ -102,7 +108,6 @@ object Project
   def main(args: Array[String]): Unit =
   {
 
-    val canvas: html.Canvas = dom.document.getElementById("canvas").asInstanceOf[html.Canvas]
     // val myComponent = div(color := "magenta", "Hello World", cls := "hello")
 
     //OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
@@ -117,11 +122,14 @@ object Project
 
     // meineVal.onNext("neuer String")
 
-    initializiere(canvas)
+
+    //  canvas = dom.document.getElementById("canvas").asInstanceOf[html.Canvas]
+    //  paper.setup(canvas)
+    // dom.console.log(pdf)
+    initializiere()
     definiereEvents
     //zeichneHinterGrund
 
-    //    paper.setup(canvas)
     //
     //    dom.console.log(paper)
     //    dom.console.log(paper.view.toString)
@@ -148,20 +156,18 @@ object Project
     dom.window.setInterval(() => zeichne, 100)
   }
 
-  @JSExport
-  def main2(can: html.Canvas): Unit =
+
+  def initializiere() =
   {
-
-
-  }
-
-  def initializiere(can: html.Canvas) =
-  {
-    canvas = can;
+    canvas = dom.document.getElementById("canvas").asInstanceOf[html.Canvas]
 
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
-    // println(ctx.font)
+    println("davor")
+    paper.setup(canvas)
+
+
+    textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
 
     canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
@@ -174,6 +180,13 @@ object Project
   def definiereEvents() =
   {
 
+    val export = dom.document.getElementById("Exportieren").asInstanceOf[html.Button]
+    export.onmousedown = (e: dom.MouseEvent) =>
+    {
+      dom.console.log(canvas.toDataURL("image/png", 1.0))
+
+    }
+
     // auf Escape (keyCode = 27) wird kontinuierliche Zeichnung unterbrochen
     dom.document.onkeypress = (e: dom.KeyboardEvent) =>
     {
@@ -182,12 +195,16 @@ object Project
         lastDown = Pointt(-1, -1)
       }
 
+
     }
 
     canvas.onmousedown = (e: dom.MouseEvent) =>
     {
-      //teste ob sich unter klick ein Ton befindet
+
+      textFeld.value = ""
+      textFeldIndex = -1
     }
+
     canvas.onmouseup = (e: dom.MouseEvent) =>
     {
 
@@ -304,11 +321,54 @@ object Project
       lastDown = Pointt(-1, -1)
 
     }
+    textFeld.onkeypress = (e: dom.KeyboardEvent) =>
+    {
+
+      //Tab
+      if (e.keyCode == 9)
+      {
+        e.preventDefault()
+        if (!e.shiftKey)
+        {
+          if (aktuelleStimme.length > textFeldIndex + 1)
+          {
+            textFeldIndex = textFeldIndex + 1
+          }
+        } else
+        {
+          if (textFeldIndex > 0)
+          {
+            textFeldIndex = textFeldIndex - 1
+          }
+        }
+        textFeld.value = aktuelleStimme(textFeldIndex).text
+      }
+
+
+    }
+    textFeld.onkeyup = (e: dom.KeyboardEvent) =>
+    {
+
+      if (aktuelleStimme.length > 0)
+      {
+        aktuelleStimme(textFeldIndex) = Ton(aktuelleStimme(textFeldIndex).hoehe, aktuelleStimme(textFeldIndex).start, aktuelleStimme(textFeldIndex).laenge, textFeld.value)
+      }
+    }
+    textFeld.onmousedown = (e: dom.MouseEvent) =>
+    {
+      if (textFeldIndex == -1)
+      {
+        textFeldIndex = 0
+      }
+      if (aktuelleStimme.length > textFeldIndex)
+      {
+        textFeld.value = aktuelleStimme(textFeldIndex).text
+      }
+    }
   }
 
   def zeichne() =
   {
-
 
     var lastPoint = Pointt(0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -317,12 +377,10 @@ object Project
 
     ctx.lineWidth = 2
 
-    println("aktuelleStimme: " + aktuelleStimme)
     for (stimmenIndex <- 0 to stueck.length - 1)
     {
       val stimme = stueck(stimmenIndex)
       ctx.strokeStyle = stimmenFarben(stimmenIndex)
-      println(stimme)
       for (i <- 0 to stimme.length - 1)
       {
 
@@ -341,20 +399,21 @@ object Project
 
         //zeichne Gesang
         var gesangSchonGezeichnet = false
-
+        ctx.font = if (i == textFeldIndex) fontBoldText else fontText
         if (i > 0)
         {
-          val hoeheVorgaenger = if(tones.indexOf(stimme(i-1).hoehe) != -1) tones.indexOf(stimme(i-1).hoehe) else stimme(i-1).hoehe.toInt
-          val hoeheVonAktuellem= if(tones.indexOf(stimme(i).hoehe) != -1) tones.indexOf(stimme(i).hoehe) else stimme(i).hoehe.toInt
-          if(hoeheVorgaenger < hoeheVonAktuellem)
-            {
-              gesangSchonGezeichnet = true
-              ctx.fillText(stimme(i).gesang, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) +1.2 * fontHeight)
-            }
+          val hoeheVorgaenger = if (tones.indexOf(stimme(i - 1).hoehe) != -1) tones.indexOf(stimme(i - 1).hoehe) else stimme(i - 1).hoehe.toInt
+          val hoeheVonAktuellem = if (tones.indexOf(stimme(i).hoehe) != -1) tones.indexOf(stimme(i).hoehe) else stimme(i).hoehe.toInt
+          if (hoeheVorgaenger < hoeheVonAktuellem)
+          {
+            gesangSchonGezeichnet = true
+            ctx.fillText(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + 1.4 * fontHeightText)
+          }
 
         }
-        if(!gesangSchonGezeichnet){
-          ctx.fillText(stimme(i).gesang, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) -0.5 * fontHeight)
+        if (!gesangSchonGezeichnet)
+        {
+          ctx.fillText(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) - 0.7 * fontHeightText)
         }
         ctx.beginPath
         ctx.moveTo(getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
@@ -395,15 +454,16 @@ object Project
   def zeichneHinterGrund() =
   {
     ctx.strokeStyle = farbeHintergrund
+    ctx.font = font
+    ctx.fillStyle = fontStyle
+
     for (zeile <- 0 to zeilenAnzahl - 1)
     {
       for (i <- 0 to tones.length - 1)
       {
-        ctx.font = font
-        ctx.fillStyle = fontStyle
+
+
         ctx.lineWidth = 1
-
-
         ctx.fillText(tones(i), randSeite - 30, randOben + i * abstandToene + zeile * zeilenHoehe + fontHeight / 2)
 
 
