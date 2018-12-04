@@ -25,5 +25,20 @@
     <script type="text/javascript" src="example-fastopt-library.js"></script>
     <script type="text/javascript" src="example-fastopt-loader.js"></script>
 <script type="text/javascript" src="example-fastopt.js"></script>
+<script type="text/javascript"src="https://unpkg.com/jspdf@latest/dist/jspdf.min.js"></script>
+<script type="text/javascript">
+    var exportButton = document.getElementById("Exportieren");
+    exportButton.addEventListener("click",function (ev) {
+        var canvas = document.getElementById("canvas");
+     var doc = new jsPdf();
+     console.log(doc)
+
+    })
+
+
+
+
+</script>
+
 </body>
 </html>
