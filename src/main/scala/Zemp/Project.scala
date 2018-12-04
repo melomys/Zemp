@@ -164,14 +164,13 @@ object Project
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
     println("davor")
-    paper.setup(canvas)
 
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
 
     canvas.width = dom.window.innerWidth.asInstanceOf[Int]
     canvas.height = dom.window.innerHeight.asInstanceOf[Int]
-    laengeHorizontalLinie = canvas.width - 2 * randSeite;
+      laengeHorizontalLinie = canvas.width - 2 * randSeite;
     emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
 
 
