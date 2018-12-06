@@ -164,7 +164,10 @@ object Project
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
     println("davor")
-    paper.setup(canvas)
+ ///   paper.setup(canvas)
+ //   dom.console.log(paper)
+ //   var p = new Path
+  //  dom.console.log(p)
 
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
@@ -183,8 +186,11 @@ object Project
     val export = dom.document.getElementById("Exportieren").asInstanceOf[html.Button]
     export.onmousedown = (e: dom.MouseEvent) =>
     {
+      dom.console.log(jsPdf)
       dom.console.log(canvas.toDataURL("image/png", 1.0))
 
+      var doc = new jsPdf
+      dom.console.log(jsPdf)
     }
 
     // auf Escape (keyCode = 27) wird kontinuierliche Zeichnung unterbrochen
