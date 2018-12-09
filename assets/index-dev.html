@@ -1,44 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Example Scala.js application</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Example Scala.js application</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body style="margin: 0px">
 <div id="topRow">
-     <select id="stimme">
-  <option value="1">1. Stimme</option>
-  <option value="2">2. Stimme</option>
-  <option value="3">3. Stimme</option>
-</select>
+    <select id="stimme">
+        <option value="1">1. Stimme</option>
+        <option value="2">2. Stimme</option>
+        <option value="3">3. Stimme</option>
+    </select>
 
     <input type="text" id="textAendern">
     <button id="Exportieren">Exportieren</button>
 </div>
-    <div id="app"></div>
+<div id="app"></div>
 <div id="canvasDiv">
-    <canvas style="display: block" id="canvas" width="255" height="255"/>
+    <canvas id="canvas"/>
 </div>
 
 
-    <script type="text/javascript" src="example-fastopt-library.js"></script>
-    <script type="text/javascript" src="example-fastopt-loader.js"></script>
+
+<script type="text/javascript" src="example-fastopt-library.js"></script>
+<script type="text/javascript" src="example-fastopt-loader.js"></script>
 <script type="text/javascript" src="example-fastopt.js"></script>
-<script type="text/javascript"src="https://unpkg.com/jspdf@latest/dist/jspdf.min.js"></script>
-<script type="text/javascript">
-    var exportButton = document.getElementById("Exportieren");
-    exportButton.addEventListener("click",function (ev) {
-        var canvas = document.getElementById("canvas");
-     //var doc = new jsPdf();
-   //  console.log(doc)
-
-    })
-
-
-
-
-</script>
+<!script type="text/javascript" src="lib/jsPDF-1.3.2/jspdf.js"><!/script>
+<!script type="text/javascript" src="export.js"><!/script>
+<script type="text/javascript" src="jsPdf.js"></script>
 
 </body>
 </html>
+

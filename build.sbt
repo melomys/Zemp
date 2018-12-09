@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
 )
 npmDependencies in Compile ++= (
   // https://fontawesome.com/how-to-use/with-the-api/setup/library
- // "paper" -> "0.11.8" ::
+  //"paper" -> "0.11.8" ::
     "jspdf" -> "1.4.1" ::
     Nil
 )

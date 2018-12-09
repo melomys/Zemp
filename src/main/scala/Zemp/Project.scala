@@ -30,7 +30,7 @@ object Project
   val intervallViertel = 32
   val aktuelleNotenLaenge = intervallViertel / 4
 
-  val abstandToene = intervallViertel / 2
+  val abstandToene = intervallViertel
   val zeilenAnzahl = 4
 
   val randOben = 5 * abstandToene
@@ -164,16 +164,17 @@ object Project
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
     println("davor")
- ///   paper.setup(canvas)
- //   dom.console.log(paper)
+    //paper.setup(canvas)
+  //dom.console.log(paper)
  //   var p = new Path
   //  dom.console.log(p)
 
+    var canvasDiv = dom.document.getElementById("canvasDiv").asInstanceOf[html.Div]
+    canvasDiv.setAttribute("style","height: "+(dom.window.innerHeight-50)+"px")
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
-
-    canvas.width = dom.window.innerWidth.asInstanceOf[Int]
-    canvas.height = dom.window.innerHeight.asInstanceOf[Int]
+    canvas.width = dom.window.innerWidth.asInstanceOf[Int] * 2
+    canvas.height = dom.window.innerHeight.asInstanceOf[Int]*2
     laengeHorizontalLinie = canvas.width - 2 * randSeite;
     emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
 
@@ -183,14 +184,20 @@ object Project
   def definiereEvents() =
   {
 
+
     val export = dom.document.getElementById("Exportieren").asInstanceOf[html.Button]
     export.onmousedown = (e: dom.MouseEvent) =>
     {
-      dom.console.log(jsPdf)
-      dom.console.log(canvas.toDataURL("image/png", 1.0))
 
-      var doc = new jsPdf
       dom.console.log(jsPdf)
+      var test = new jsPdf()
+      dom.console.log(test)
+      test.save("teset.pdf")
+     // dom.console.log(jsPdf)
+    //  dom.console.log(canvas.toDataURL("image/png", 1.0))
+
+    //  var doc = new jsPdf
+     // dom.console.log(jsPdf)
     }
 
     // auf Escape (keyCode = 27) wird kontinuierliche Zeichnung unterbrochen
@@ -667,12 +674,12 @@ object Project
 
   def getYCoordinateFromCanvas(y: Int): Int =
   {
-    y - canvas.offsetTop.toInt
+    y -canvas.getBoundingClientRect().top.toInt
   }
 
   def getXCoordinateFromCanvas(x: Int): Int =
   {
-    x - canvas.offsetLeft.toInt
+    x - canvas.getBoundingClientRect().left.toInt
   }
 
   def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
