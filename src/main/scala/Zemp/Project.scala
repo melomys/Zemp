@@ -63,6 +63,10 @@ object Project
   var lastDown = Pointt(-1, -1)
   var hintTon = Ton("C", 0, 0)
   var bewegterTonIndex = -1
+  var bewegterTonIndexHorizontale = -1
+  var alterStart= 0.0
+  var laengeTon = 0.0
+  var laengeVorgaengerTon = 0.0
 
 
   import monix.execution._
@@ -246,7 +250,22 @@ object Project
             {
               if(schlagPunkt >= ton.start && schlagPunkt < ton.start + ton.laenge && bewegterTonIndex == -1)
                 {
-                  if(ton.hoehe.equals(note)) bewegterTonIndex = aktuelleStimme.indexOf(ton);
+                  if(ton.hoehe.equals(note)) bewegterTonIndex = aktuelleStimme.indexOf(ton)
+
+                  if(schlagPunkt == ton.start && existiertDirekterVorgaengerTon(ton,aktuelleStimme))
+                    {
+                      val indexTon = if(tones.indexOf(ton.hoehe) != -1) tones.indexOf(ton.hoehe) else ton.hoehe.toInt
+                      val indexTonVorgaenger = if(tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe) != -1) tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe) else aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe.toInt
+                      val indexNote = if(tones.indexOf(note) != -1) tones.indexOf(note) else note.toInt
+                      if((indexTon > indexNote && indexTonVorgaenger <= indexNote) || indexTon < indexNote && indexTonVorgaenger >= indexNote)
+                        {
+                          bewegterTonIndexHorizontale = aktuelleStimme.indexOf(ton)
+                          alterStart = ton.start
+                          laengeTon= ton.laenge
+                          laengeVorgaengerTon = aktuelleStimme(aktuelleStimme.indexOf(ton)-1).laenge
+                        }
+                    }
+
                 }
             }
         }
@@ -260,6 +279,7 @@ object Project
       val x = getXCoordinateFromCanvas(e.clientX.toInt)
       val y = getYCoordinateFromCanvas(e.clientY.toInt)
       bewegterTonIndex = -1
+      bewegterTonIndexHorizontale = -1
       if (lastDown.x == -1)
       {
         val start = getSchlagpunkt(x, y)
@@ -329,8 +349,19 @@ object Project
         //verschiebung von Toenen
       }else if(bewegterTonIndex != -1)
         {
+
           val bewegterTon = Ton(aktuelleStimme(bewegterTonIndex).hoehe,aktuelleStimme(bewegterTonIndex).start,aktuelleStimme(bewegterTonIndex).laenge,aktuelleStimme(bewegterTonIndex).text)
           aktuelleStimme(bewegterTonIndex) = Ton(getNote(y,bewegterTon.start),bewegterTon.start,bewegterTon.laenge,bewegterTon.text)
+        }else if(bewegterTonIndexHorizontale != -1)
+        {
+          val schlagpunkt = getSchlagpunkt(x,y)
+          val diff = alterStart - schlagpunkt
+          println("diff: " + diff)
+          println("laengeVorgaenger: " + laengeVorgaengerTon)
+          println("laengeTon: " + laengeTon)
+                aktuelleStimme(bewegterTonIndexHorizontale) = Ton(aktuelleStimme(bewegterTonIndexHorizontale).hoehe,schlagpunkt,laengeTon+diff,aktuelleStimme(bewegterTonIndexHorizontale).text)
+          aktuelleStimme(bewegterTonIndexHorizontale-1) = Ton(aktuelleStimme(bewegterTonIndexHorizontale-1).hoehe,aktuelleStimme(bewegterTonIndexHorizontale-1).start,laengeVorgaengerTon-diff,aktuelleStimme(bewegterTonIndexHorizontale-1).text)
+
         }
     }
 
