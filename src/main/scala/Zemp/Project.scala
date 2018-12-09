@@ -62,6 +62,7 @@ object Project
 
   var lastDown = Pointt(-1, -1)
   var hintTon = Ton("C", 0, 0)
+  var selection: Ton = null
   var bewegterTonIndex = -1
   var bewegterTonIndexHorizontale = -1
   var alterStart= 0.0
@@ -227,7 +228,13 @@ object Project
       if (e.keyCode == 27)
       {
         lastDown = Pointt(-1, -1)
+        selection = null
       }
+      else if(e.keyCode == 46)
+        {
+          aktuelleStimme.remove(aktuelleStimme.indexOf(selection))
+          selection = null
+        }
 
 
     }
@@ -250,7 +257,11 @@ object Project
             {
               if(schlagPunkt >= ton.start && schlagPunkt < ton.start + ton.laenge && bewegterTonIndex == -1)
                 {
-                  if(ton.hoehe.equals(note)) bewegterTonIndex = aktuelleStimme.indexOf(ton)
+                  if (ton.hoehe.equals(note))
+                  {
+                    bewegterTonIndex = aktuelleStimme.indexOf(ton)
+                    selection = ton
+                  }
 
                   if(schlagPunkt == ton.start && existiertDirekterVorgaengerTon(ton,aktuelleStimme))
                     {
@@ -352,13 +363,11 @@ object Project
 
           val bewegterTon = Ton(aktuelleStimme(bewegterTonIndex).hoehe,aktuelleStimme(bewegterTonIndex).start,aktuelleStimme(bewegterTonIndex).laenge,aktuelleStimme(bewegterTonIndex).text)
           aktuelleStimme(bewegterTonIndex) = Ton(getNote(y,bewegterTon.start),bewegterTon.start,bewegterTon.laenge,bewegterTon.text)
+          selection = aktuelleStimme(bewegterTonIndex)
         }else if(bewegterTonIndexHorizontale != -1)
         {
           val schlagpunkt = getSchlagpunkt(x,y)
           val diff = alterStart - schlagpunkt
-          println("diff: " + diff)
-          println("laengeVorgaenger: " + laengeVorgaengerTon)
-          println("laengeTon: " + laengeTon)
                 aktuelleStimme(bewegterTonIndexHorizontale) = Ton(aktuelleStimme(bewegterTonIndexHorizontale).hoehe,schlagpunkt,laengeTon+diff,aktuelleStimme(bewegterTonIndexHorizontale).text)
           aktuelleStimme(bewegterTonIndexHorizontale-1) = Ton(aktuelleStimme(bewegterTonIndexHorizontale-1).hoehe,aktuelleStimme(bewegterTonIndexHorizontale-1).start,laengeVorgaengerTon-diff,aktuelleStimme(bewegterTonIndexHorizontale-1).text)
 
@@ -472,10 +481,11 @@ object Project
     {
       val stimme = stueck(stimmenIndex)
       ctx.strokeStyle = stimmenFarben(stimmenIndex)
+
       for (i <- 0 to stimme.length - 1)
       {
 
-
+        ctx.lineWidth = 2
         val start = stimme(i).start
         val laenge = stimme(i).laenge
 
@@ -506,6 +516,8 @@ object Project
         {
           ctx.fillText(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) - 0.7 * fontHeightText)
         }
+
+        if(stimme(i).equals(selection)) ctx.lineWidth = 3 else ctx.lineWidth = 2
         ctx.beginPath
         ctx.moveTo(getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
 
@@ -527,7 +539,6 @@ object Project
           {
             ctx.lineTo(getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
             ctx.stroke
-            //dom.window.alert("hallo")
             ctx.beginPath
             ctx.moveTo(getXKoordinateZumZeichnen(1), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
             rek(zeile + 1)
