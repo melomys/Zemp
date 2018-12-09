@@ -22,7 +22,7 @@ html, body {margin: 0; height: 100%; overflow: hidden}
     height: 50px;
 }
 
-#textAendern{
+#textAendern,#takt{
     width: 50px;
 }
 

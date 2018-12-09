@@ -19,12 +19,12 @@ object Project
   var stueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton])
   var aktuelleStimme = stueck(0)
   val tones = Array("C", "B", "Ab", "G", "F", "Eb", "D", "C1")
-  val takt = 5
+  var takt = 5
 
   var canvas: html.Canvas = null
   var ctx: dom.CanvasRenderingContext2D = null
   var textFeld: html.Input = null
-
+  var taktFeld: html.Input = null
   var textFeldIndex = -1
 
   val intervallViertel = 32
@@ -177,6 +177,7 @@ object Project
 
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
+    taktFeld = dom.document.getElementById("takt").asInstanceOf[html.Input]
     canvas.width = dom.window.innerWidth.asInstanceOf[Int] * 2
     canvas.height = dom.window.innerHeight.asInstanceOf[Int] * 2
     laengeHorizontalLinie = canvas.width - 2 * randSeite;
@@ -458,6 +459,16 @@ object Project
       if (aktuelleStimme.length > textFeldIndex)
       {
         textFeld.value = aktuelleStimme(textFeldIndex).text
+      }
+    }
+    taktFeld.onkeyup = (e: dom.KeyboardEvent) =>
+    {
+      try
+      {
+        takt = taktFeld.value.toInt
+      } catch
+      {
+        case ex: NumberFormatException =>
       }
     }
 
