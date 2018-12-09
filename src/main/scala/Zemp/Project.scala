@@ -62,6 +62,7 @@ object Project
 
   var lastDown = Pointt(-1, -1)
   var hintTon = Ton("C", 0, 0)
+  var bewegterTonIndex = -1
 
 
   import monix.execution._
@@ -165,21 +166,27 @@ object Project
       .asInstanceOf[dom.CanvasRenderingContext2D]
     println("davor")
     //paper.setup(canvas)
-  //dom.console.log(paper)
- //   var p = new Path
-  //  dom.console.log(p)
+    //dom.console.log(paper)
+    //   var p = new Path
+    //  dom.console.log(p)
 
-    var canvasDiv = dom.document.getElementById("canvasDiv").asInstanceOf[html.Div]
-    canvasDiv.setAttribute("style","height: "+(dom.window.innerHeight-50)+"px")
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
     canvas.width = dom.window.innerWidth.asInstanceOf[Int] * 2
-    canvas.height = dom.window.innerHeight.asInstanceOf[Int]*2
+    canvas.height = dom.window.innerHeight.asInstanceOf[Int] * 2
     laengeHorizontalLinie = canvas.width - 2 * randSeite;
     emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
 
+    onResize()
+  }
+
+  def onResize(): Unit =
+  {
+    var canvasDiv = dom.document.getElementById("canvasDiv").asInstanceOf[html.Div]
+    canvasDiv.setAttribute("style", "height: " + (dom.window.innerHeight - 50) + "px")
 
   }
+
 
   def definiereEvents() =
   {
@@ -190,14 +197,24 @@ object Project
     {
 
       dom.console.log(jsPdf)
-      var test = new jsPdf()
+      var test = new jsPdf("landscape")
       dom.console.log(test)
-      test.save("teset.pdf")
-     // dom.console.log(jsPdf)
-    //  dom.console.log(canvas.toDataURL("image/png", 1.0))
 
-    //  var doc = new jsPdf
-     // dom.console.log(jsPdf)
+      val text = "hallo"
+
+      dom.window.alert("" +(test.getStringUnitWidth(text)))
+      dom.console.log(test.setFontSize())
+
+      test.text("hallo", 150,150)
+
+      test.setDrawColor("#FF0000")
+      test.line(0,0,210,210)
+      test.save("teset.pdf")
+      // dom.console.log(jsPdf)
+      //  dom.console.log(canvas.toDataURL("image/png", 1.0))
+
+      //  var doc = new jsPdf
+      // dom.console.log(jsPdf)
     }
 
     // auf Escape (keyCode = 27) wird kontinuierliche Zeichnung unterbrochen
@@ -216,6 +233,25 @@ object Project
 
       textFeld.value = ""
       textFeldIndex = -1
+      //verschiebung
+      if(lastDown.x == -1)
+        {
+          val x = getXCoordinateFromCanvas(e.clientX.toInt)
+      val y = getYCoordinateFromCanvas(e.clientY.toInt)
+
+          val schlagPunkt = getSchlagpunkt(x,y)
+          val note = getNote(y,schlagPunkt)
+
+          for(ton <- aktuelleStimme)
+            {
+              if(schlagPunkt >= ton.start && schlagPunkt < ton.start + ton.laenge && bewegterTonIndex == -1)
+                {
+                  if(ton.hoehe.equals(note)) bewegterTonIndex = aktuelleStimme.indexOf(ton);
+                }
+            }
+        }
+
+
     }
 
     canvas.onmouseup = (e: dom.MouseEvent) =>
@@ -223,6 +259,7 @@ object Project
 
       val x = getXCoordinateFromCanvas(e.clientX.toInt)
       val y = getYCoordinateFromCanvas(e.clientY.toInt)
+      bewegterTonIndex = -1
       if (lastDown.x == -1)
       {
         val start = getSchlagpunkt(x, y)
@@ -274,12 +311,12 @@ object Project
     }
     canvas.onmousemove = (e: dom.MouseEvent) =>
     {
+
+       val x = getXCoordinateFromCanvas(e.clientX.toInt)
+        val y = getYCoordinateFromCanvas(e.clientY.toInt)
       //wenn noch nichts angeklickt wurde muss hier nichts weiter getan werden
       if (lastDown.x != -1)
       {
-        val x = getXCoordinateFromCanvas(e.clientX.toInt)
-        val y = getYCoordinateFromCanvas(e.clientY.toInt)
-
         val start = getSchlagpunkt(lastDown.x, lastDown.y)
         val laenge = getSchlagpunkt(x, y) - start
         //note kriegt den String zugewiesen auf den geklickt wurde
@@ -289,7 +326,12 @@ object Project
         hintTon = Ton(note, start, laenge)
         if (!isValid(hintTon)) hintTon = Ton(note, start, 0)
 
-      }
+        //verschiebung von Toenen
+      }else if(bewegterTonIndex != -1)
+        {
+          val bewegterTon = Ton(aktuelleStimme(bewegterTonIndex).hoehe,aktuelleStimme(bewegterTonIndex).start,aktuelleStimme(bewegterTonIndex).laenge,aktuelleStimme(bewegterTonIndex).text)
+          aktuelleStimme(bewegterTonIndex) = Ton(getNote(y,bewegterTon.start),bewegterTon.start,bewegterTon.laenge,bewegterTon.text)
+        }
     }
 
     def isValid(ton: Ton): Boolean =
@@ -378,6 +420,11 @@ object Project
         textFeld.value = aktuelleStimme(textFeldIndex).text
       }
     }
+
+    dom.window.addEventListener("resize", (e: dom.UIEvent) =>
+    {
+      onResize()
+    })
   }
 
   def zeichne() =
@@ -674,7 +721,7 @@ object Project
 
   def getYCoordinateFromCanvas(y: Int): Int =
   {
-    y -canvas.getBoundingClientRect().top.toInt
+    y - canvas.getBoundingClientRect().top.toInt
   }
 
   def getXCoordinateFromCanvas(x: Int): Int =
