@@ -19,7 +19,12 @@ object Project
   var stueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton])
   var aktuelleStimme = stueck(0)
   val tones = Array("C", "B", "Ab", "G", "F", "Eb", "D", "C1")
+
   var takt = 5
+  var titel = "Titel"
+
+
+  val maxSchlaegeProZeile = 32;
 
   var canvas: html.Canvas = null
   var ctx: dom.CanvasRenderingContext2D = null
@@ -47,6 +52,7 @@ object Project
   val fontHeightText = 12
   val fontText = fontHeightText + "pt Calibri"
   val fontBoldText = "bold " + fontText
+
 
   val farbeHintergrund = "#d0d0d0"
   // val farbeErsteStimme = "#DD1E1ECC"
@@ -170,7 +176,7 @@ object Project
     ctx = canvas.getContext("2d")
       .asInstanceOf[dom.CanvasRenderingContext2D]
     println("davor")
-    //paper.setup(canvas)
+    //paper.setup(canvas)test
     //dom.console.log(paper)
     //   var p = new Path
     //  dom.console.log(p)
@@ -178,18 +184,21 @@ object Project
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
     taktFeld = dom.document.getElementById("takt").asInstanceOf[html.Input]
-    canvas.width = dom.window.innerWidth.asInstanceOf[Int] * 2
-    canvas.height = dom.window.innerHeight.asInstanceOf[Int] * 2
-    laengeHorizontalLinie = canvas.width - 2 * randSeite;
-    emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
 
-    onResize()
+
+    onResize
   }
 
   def onResize(): Unit =
   {
     var canvasDiv = dom.document.getElementById("canvasDiv").asInstanceOf[html.Div]
     canvasDiv.setAttribute("style", "height: " + (dom.window.innerHeight - 50) + "px")
+    laengeHorizontalLinie = puffer + intervallViertel*(maxSchlaegeProZeile - maxSchlaegeProZeile%takt)
+    emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
+    dom.console.log("emptySpace: " + emptySpace)
+    dom.console.log("schlaege: " +(maxSchlaegeProZeile - maxSchlaegeProZeile%takt ))
+    canvas.width = laengeHorizontalLinie + randSeite*2
+    canvas.height = dom.window.innerHeight.asInstanceOf[Int] * 2
 
   }
 
@@ -203,19 +212,30 @@ object Project
     {
 
       dom.console.log(jsPdf)
-      var test = new jsPdf("landscape")
-      dom.console.log(test)
+      var doc = new jsPdf("landscape")
+      dom.console.log(doc)
 
-      val text = "hallo"
 
-      dom.window.alert("" +(test.getStringUnitWidth(text)))
-      dom.console.log(test.setFontSize())
 
-      test.text("hallo", 150,150)
+      //Zentrierung vom Titel
+      val fontSize = doc.internal.getFontSize()
+      val pageWidth = doc.internal.pageSize.getWidth()
+      val scaleFactor = doc.internal.scaleFactor
+      val titelWidth = doc.getStringUnitWidth(titel)*fontSize/scaleFactor
 
-      test.setDrawColor("#FF0000")
-      test.line(0,0,210,210)
-      test.save("teset.pdf")
+      val xCoord = (pageWidth-titelWidth)/2
+      val yCoord = 2.5*fontSize/scaleFactor
+
+      doc.text(titel,xCoord,yCoord)
+
+      dom.console.log(doc.internal.scaleFactor)
+      dom.console.log(doc.internal.pageSize.getWidth())
+
+      doc.text("hallo", 150,150)
+
+      doc.setDrawColor("#FF0000")
+      doc.line(0,0,210,210)
+      doc.save("teset.pdf")
       // dom.console.log(jsPdf)
       //  dom.console.log(canvas.toDataURL("image/png", 1.0))
 
@@ -466,6 +486,7 @@ object Project
       try
       {
         takt = taktFeld.value.toInt
+        onResize
       } catch
       {
         case ex: NumberFormatException =>

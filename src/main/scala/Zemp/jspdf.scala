@@ -22,6 +22,9 @@ object jsPdf extends js.Object
 @JSImport("jspdf", JSImport.Default)
 class jsPdf(orientation : String = "p",unit : String = "mm", format : String = "a4") extends js.Object
 {
+
+  def internal : Internal = js.native
+
   def save(filename : String) : jsPdf = js.native
 
   def line(x1 : Int, y1 : Int, x2 : Int, y2 : Int) : jsPdf = js.native
@@ -32,13 +35,30 @@ class jsPdf(orientation : String = "p",unit : String = "mm", format : String = "
 
   def setDrawColor(ch1 : String) : jsPdf = js.native
 
-  def text(text : String, x : Int, y: Int) : jsPdf = js.native
+  def text(text : String, x : Double, y: Double) : jsPdf = js.native
 
   def getStringUnitWidth(text : String) : Double = js.native
 
-  def setFontSize() : Double = js.native
+  def setFontSize(size : Double) : jsPdf = js.native
 
 
+}
 
+trait Internal extends js.Object
+{
+  def getFontSize() : Double
+
+  def pageSize : PageSize
+
+  def scaleFactor : Double
+}
+
+trait PageSize extends js.Object
+{
+  def getWidth() : Double
+
+  def getHeight() : Double
+
+  def width : Double
 
 }
