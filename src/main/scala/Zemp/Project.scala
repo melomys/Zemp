@@ -3,6 +3,8 @@ package Zemp
 import org.scalajs.dom
 import org.scalajs.dom.html
 import outwatch.dom._
+import rx._
+
 
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js.annotation.JSExport
@@ -30,13 +32,15 @@ object Project
   var ctx: dom.CanvasRenderingContext2D = null
   var textFeld: html.Input = null
   var taktFeld: html.Input = null
+  var zeilenFeld: html.Input = null
+  var speichernButton: html.Button = null
   var textFeldIndex = -1
 
   val intervallViertel = 32
   val aktuelleNotenLaenge = intervallViertel / 4
 
   val abstandToene = intervallViertel
-  val zeilenAnzahl = 4
+  var zeilenAnzahl = 2
 
   val randOben = 5 * abstandToene
   val randSeite = 50
@@ -78,7 +82,6 @@ object Project
 
   import monix.execution._
   import monix.reactive._
-  import rx._
 
   implicit def RxAsValueObservable: AsValueObservable[Rx] = new AsValueObservable[Rx]
   {
@@ -184,7 +187,10 @@ object Project
 
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
     taktFeld = dom.document.getElementById("takt").asInstanceOf[html.Input]
+    zeilenFeld = dom.document.getElementById("zeilen").asInstanceOf[html.Input]
+    zeilenFeld.value = zeilenAnzahl + ""
 
+    speichernButton  = dom.document.getElementById("speichern").asInstanceOf[html.Button]
 
     onResize
   }
@@ -198,7 +204,7 @@ object Project
     dom.console.log("emptySpace: " + emptySpace)
     dom.console.log("schlaege: " +(maxSchlaegeProZeile - maxSchlaegeProZeile%takt ))
     canvas.width = laengeHorizontalLinie + randSeite*2
-    canvas.height = dom.window.innerHeight.asInstanceOf[Int] * 2
+    canvas.height = randOben + zeilenAnzahl*(zeilenHoehe)
 
   }
 
@@ -493,10 +499,33 @@ object Project
       }
     }
 
+    zeilenFeld.onkeyup = (e: dom.KeyboardEvent) =>
+      {
+        try
+        {
+          zeilenAnzahl = zeilenFeld.value.toInt
+          onResize
+        }catch
+          {
+            case ex : NumberFormatException =>
+          }
+      }
+
     dom.window.addEventListener("resize", (e: dom.UIEvent) =>
     {
       onResize()
     })
+
+    speichernButton.onmousedown = (e: dom.MouseEvent) =>
+      {
+      //  dom.console.log("in eventhandling")
+        ImportExport.export(stueck,"Test123")
+
+
+      }
+
+
+
   }
 
   def zeichne() =
