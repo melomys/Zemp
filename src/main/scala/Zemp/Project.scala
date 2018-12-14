@@ -42,7 +42,7 @@ object Project
   val abstandToene = intervallViertel
   var zeilenAnzahl = 2
 
-  val randOben = 5 * abstandToene
+  val randOben = 3 * abstandToene
   val randSeite = 50
   val puffer = intervallViertel / 2
 
@@ -61,7 +61,7 @@ object Project
   val farbeHintergrund = "#d0d0d0"
   // val farbeErsteStimme = "#DD1E1ECC"
 
-  val stimmenFarben = Array("#DD1E1ECC", "#ff0000", "#ffff00")
+  val stimmenFarben = Array("#DD1E1E", "#ff0000", "#ffff00")
   val farbeHint = "#0000ff"
 
   //laenge der linie
@@ -218,35 +218,7 @@ object Project
     export.onmousedown = (e: dom.MouseEvent) =>
     {
 
-      dom.console.log(jsPdf)
-      var doc = new jsPdf("landscape")
-      dom.console.log(doc)
-
-
-      //Zentrierung vom Titel
-      val fontSize = doc.internal.getFontSize()
-      val pageWidth = doc.internal.pageSize.getWidth()
-      val scaleFactor = doc.internal.scaleFactor
-      val titelWidth = doc.getStringUnitWidth(titel) * fontSize / scaleFactor
-
-      val xCoord = (pageWidth - titelWidth) / 2
-      val yCoord = 2.5 * fontSize / scaleFactor
-
-      doc.text(titel, xCoord, yCoord)
-
-      dom.console.log(doc.internal.scaleFactor)
-      dom.console.log(doc.internal.pageSize.getWidth())
-
-      doc.text("hallo", 150, 150)
-
-      doc.setDrawColor("#FF0000")
-      doc.line(0, 0, 210, 210)
-      doc.save("teset.pdf")
-      // dom.console.log(jsPdf)
-      //  dom.console.log(canvas.toDataURL("image/png", 1.0))
-
-      //  var doc = new jsPdf
-      // dom.console.log(jsPdf)
+      ImportExport.pdfExport(stueck)
     }
 
     // auf Escape (keyCode = 27) wird kontinuierliche Zeichnung unterbrochen

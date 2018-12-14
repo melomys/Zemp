@@ -41,6 +41,8 @@ class jsPdf(orientation : String = "p",unit : String = "mm", format : String = "
 
   def setFontSize(size : Double) : jsPdf = js.native
 
+  def setTextColor(ch1: String) : jsPdf = js.native
+
 
 }
 
