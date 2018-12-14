@@ -2,9 +2,9 @@ package Zemp
 
 import org.scalajs.dom
 import org.scalajs.dom.html
+import org.scalajs.dom.raw.DragEvent
 import outwatch.dom._
 import rx._
-
 
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js.annotation.JSExport
@@ -75,7 +75,7 @@ object Project
   var selection: Ton = null
   var bewegterTonIndex = -1
   var bewegterTonIndexHorizontale = -1
-  var alterStart= 0.0
+  var alterStart = 0.0
   var laengeTon = 0.0
   var laengeVorgaengerTon = 0.0
 
@@ -143,6 +143,7 @@ object Project
     // dom.console.log(pdf)
     initializiere()
     definiereEvents
+    ImportExport.definiereEvents
     //zeichneHinterGrund
 
     //
@@ -190,7 +191,7 @@ object Project
     zeilenFeld = dom.document.getElementById("zeilen").asInstanceOf[html.Input]
     zeilenFeld.value = zeilenAnzahl + ""
 
-    speichernButton  = dom.document.getElementById("speichern").asInstanceOf[html.Button]
+    speichernButton = dom.document.getElementById("speichern").asInstanceOf[html.Button]
 
     onResize
   }
@@ -199,12 +200,12 @@ object Project
   {
     var canvasDiv = dom.document.getElementById("canvasDiv").asInstanceOf[html.Div]
     canvasDiv.setAttribute("style", "height: " + (dom.window.innerHeight - 50) + "px")
-    laengeHorizontalLinie = puffer + intervallViertel*(maxSchlaegeProZeile - maxSchlaegeProZeile%takt)
+    laengeHorizontalLinie = puffer + intervallViertel * (maxSchlaegeProZeile - maxSchlaegeProZeile % takt)
     emptySpace = laengeHorizontalLinie - (((laengeHorizontalLinie - puffer) / intervallViertel) - ((laengeHorizontalLinie - puffer) / intervallViertel) % takt) * intervallViertel
     dom.console.log("emptySpace: " + emptySpace)
-    dom.console.log("schlaege: " +(maxSchlaegeProZeile - maxSchlaegeProZeile%takt ))
-    canvas.width = laengeHorizontalLinie + randSeite*2
-    canvas.height = randOben + zeilenAnzahl*(zeilenHoehe)
+    dom.console.log("schlaege: " + (maxSchlaegeProZeile - maxSchlaegeProZeile % takt))
+    canvas.width = laengeHorizontalLinie + randSeite * 2
+    canvas.height = randOben + zeilenAnzahl * (zeilenHoehe)
 
   }
 
@@ -222,25 +223,24 @@ object Project
       dom.console.log(doc)
 
 
-
       //Zentrierung vom Titel
       val fontSize = doc.internal.getFontSize()
       val pageWidth = doc.internal.pageSize.getWidth()
       val scaleFactor = doc.internal.scaleFactor
-      val titelWidth = doc.getStringUnitWidth(titel)*fontSize/scaleFactor
+      val titelWidth = doc.getStringUnitWidth(titel) * fontSize / scaleFactor
 
-      val xCoord = (pageWidth-titelWidth)/2
-      val yCoord = 2.5*fontSize/scaleFactor
+      val xCoord = (pageWidth - titelWidth) / 2
+      val yCoord = 2.5 * fontSize / scaleFactor
 
-      doc.text(titel,xCoord,yCoord)
+      doc.text(titel, xCoord, yCoord)
 
       dom.console.log(doc.internal.scaleFactor)
       dom.console.log(doc.internal.pageSize.getWidth())
 
-      doc.text("hallo", 150,150)
+      doc.text("hallo", 150, 150)
 
       doc.setDrawColor("#FF0000")
-      doc.line(0,0,210,210)
+      doc.line(0, 0, 210, 210)
       doc.save("teset.pdf")
       // dom.console.log(jsPdf)
       //  dom.console.log(canvas.toDataURL("image/png", 1.0))
@@ -257,11 +257,11 @@ object Project
         lastDown = Pointt(-1, -1)
         selection = null
       }
-      else if(e.keyCode == 46)
-        {
-          aktuelleStimme.remove(aktuelleStimme.indexOf(selection))
-          selection = null
-        }
+      else if (e.keyCode == 46)
+      {
+        aktuelleStimme.remove(aktuelleStimme.indexOf(selection))
+        selection = null
+      }
 
 
     }
@@ -272,41 +272,41 @@ object Project
       textFeld.value = ""
       textFeldIndex = -1
       //verschiebung
-      if(lastDown.x == -1)
+      if (lastDown.x == -1)
+      {
+        val x = getXCoordinateFromCanvas(e.clientX.toInt)
+        val y = getYCoordinateFromCanvas(e.clientY.toInt)
+
+        val schlagPunkt = getSchlagpunkt(x, y)
+        val note = getNote(y, schlagPunkt)
+
+        for (ton <- aktuelleStimme)
         {
-          val x = getXCoordinateFromCanvas(e.clientX.toInt)
-      val y = getYCoordinateFromCanvas(e.clientY.toInt)
-
-          val schlagPunkt = getSchlagpunkt(x,y)
-          val note = getNote(y,schlagPunkt)
-
-          for(ton <- aktuelleStimme)
+          if (schlagPunkt >= ton.start && schlagPunkt < ton.start + ton.laenge && bewegterTonIndex == -1)
+          {
+            if (ton.hoehe.equals(note))
             {
-              if(schlagPunkt >= ton.start && schlagPunkt < ton.start + ton.laenge && bewegterTonIndex == -1)
-                {
-                  if (ton.hoehe.equals(note))
-                  {
-                    bewegterTonIndex = aktuelleStimme.indexOf(ton)
-                    selection = ton
-                  }
-
-                  if(schlagPunkt == ton.start && existiertDirekterVorgaengerTon(ton,aktuelleStimme))
-                    {
-                      val indexTon = if(tones.indexOf(ton.hoehe) != -1) tones.indexOf(ton.hoehe) else ton.hoehe.toInt
-                      val indexTonVorgaenger = if(tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe) != -1) tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe) else aktuelleStimme(aktuelleStimme.indexOf(ton)-1).hoehe.toInt
-                      val indexNote = if(tones.indexOf(note) != -1) tones.indexOf(note) else note.toInt
-                      if((indexTon > indexNote && indexTonVorgaenger <= indexNote) || indexTon < indexNote && indexTonVorgaenger >= indexNote)
-                        {
-                          bewegterTonIndexHorizontale = aktuelleStimme.indexOf(ton)
-                          alterStart = ton.start
-                          laengeTon= ton.laenge
-                          laengeVorgaengerTon = aktuelleStimme(aktuelleStimme.indexOf(ton)-1).laenge
-                        }
-                    }
-
-                }
+              bewegterTonIndex = aktuelleStimme.indexOf(ton)
+              selection = ton
             }
+
+            if (schlagPunkt == ton.start && existiertDirekterVorgaengerTon(ton, aktuelleStimme))
+            {
+              val indexTon = if (tones.indexOf(ton.hoehe) != -1) tones.indexOf(ton.hoehe) else ton.hoehe.toInt
+              val indexTonVorgaenger = if (tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton) - 1).hoehe) != -1) tones.indexOf(aktuelleStimme(aktuelleStimme.indexOf(ton) - 1).hoehe) else aktuelleStimme(aktuelleStimme.indexOf(ton) - 1).hoehe.toInt
+              val indexNote = if (tones.indexOf(note) != -1) tones.indexOf(note) else note.toInt
+              if ((indexTon > indexNote && indexTonVorgaenger <= indexNote) || indexTon < indexNote && indexTonVorgaenger >= indexNote)
+              {
+                bewegterTonIndexHorizontale = aktuelleStimme.indexOf(ton)
+                alterStart = ton.start
+                laengeTon = ton.laenge
+                laengeVorgaengerTon = aktuelleStimme(aktuelleStimme.indexOf(ton) - 1).laenge
+              }
+            }
+
+          }
         }
+      }
 
 
     }
@@ -370,8 +370,8 @@ object Project
     canvas.onmousemove = (e: dom.MouseEvent) =>
     {
 
-       val x = getXCoordinateFromCanvas(e.clientX.toInt)
-        val y = getYCoordinateFromCanvas(e.clientY.toInt)
+      val x = getXCoordinateFromCanvas(e.clientX.toInt)
+      val y = getYCoordinateFromCanvas(e.clientY.toInt)
       //wenn noch nichts angeklickt wurde muss hier nichts weiter getan werden
       if (lastDown.x != -1)
       {
@@ -385,20 +385,20 @@ object Project
         if (!isValid(hintTon)) hintTon = Ton(note, start, 0)
 
         //verschiebung von Toenen
-      }else if(bewegterTonIndex != -1)
-        {
+      } else if (bewegterTonIndex != -1)
+      {
 
-          val bewegterTon = Ton(aktuelleStimme(bewegterTonIndex).hoehe,aktuelleStimme(bewegterTonIndex).start,aktuelleStimme(bewegterTonIndex).laenge,aktuelleStimme(bewegterTonIndex).text)
-          aktuelleStimme(bewegterTonIndex) = Ton(getNote(y,bewegterTon.start),bewegterTon.start,bewegterTon.laenge,bewegterTon.text)
-          selection = aktuelleStimme(bewegterTonIndex)
-        }else if(bewegterTonIndexHorizontale != -1)
-        {
-          val schlagpunkt = getSchlagpunkt(x,y)
-          val diff = alterStart - schlagpunkt
-                aktuelleStimme(bewegterTonIndexHorizontale) = Ton(aktuelleStimme(bewegterTonIndexHorizontale).hoehe,schlagpunkt,laengeTon+diff,aktuelleStimme(bewegterTonIndexHorizontale).text)
-          aktuelleStimme(bewegterTonIndexHorizontale-1) = Ton(aktuelleStimme(bewegterTonIndexHorizontale-1).hoehe,aktuelleStimme(bewegterTonIndexHorizontale-1).start,laengeVorgaengerTon-diff,aktuelleStimme(bewegterTonIndexHorizontale-1).text)
+        val bewegterTon = Ton(aktuelleStimme(bewegterTonIndex).hoehe, aktuelleStimme(bewegterTonIndex).start, aktuelleStimme(bewegterTonIndex).laenge, aktuelleStimme(bewegterTonIndex).text)
+        aktuelleStimme(bewegterTonIndex) = Ton(getNote(y, bewegterTon.start), bewegterTon.start, bewegterTon.laenge, bewegterTon.text)
+        selection = aktuelleStimme(bewegterTonIndex)
+      } else if (bewegterTonIndexHorizontale != -1)
+      {
+        val schlagpunkt = getSchlagpunkt(x, y)
+        val diff = alterStart - schlagpunkt
+        aktuelleStimme(bewegterTonIndexHorizontale) = Ton(aktuelleStimme(bewegterTonIndexHorizontale).hoehe, schlagpunkt, laengeTon + diff, aktuelleStimme(bewegterTonIndexHorizontale).text)
+        aktuelleStimme(bewegterTonIndexHorizontale - 1) = Ton(aktuelleStimme(bewegterTonIndexHorizontale - 1).hoehe, aktuelleStimme(bewegterTonIndexHorizontale - 1).start, laengeVorgaengerTon - diff, aktuelleStimme(bewegterTonIndexHorizontale - 1).text)
 
-        }
+      }
     }
 
     def isValid(ton: Ton): Boolean =
@@ -500,16 +500,16 @@ object Project
     }
 
     zeilenFeld.onkeyup = (e: dom.KeyboardEvent) =>
+    {
+      try
       {
-        try
-        {
-          zeilenAnzahl = zeilenFeld.value.toInt
-          onResize
-        }catch
-          {
-            case ex : NumberFormatException =>
-          }
+        zeilenAnzahl = zeilenFeld.value.toInt
+        onResize
+      } catch
+      {
+        case ex: NumberFormatException =>
       }
+    }
 
     dom.window.addEventListener("resize", (e: dom.UIEvent) =>
     {
@@ -517,13 +517,28 @@ object Project
     })
 
     speichernButton.onmousedown = (e: dom.MouseEvent) =>
-      {
+    {
       //  dom.console.log("in eventhandling")
-        ImportExport.export(stueck,"Test123")
+      ImportExport.export(stueck, "Test123")
 
 
-      }
+    }
 
+    canvas.ondragover = (e: DragEvent) =>
+    {
+      dom.console.log(e)
+      dom.console.log(e.dataTransfer.getData("text/plain"))
+    }
+    canvas.ondrop = (e: dom.DragEvent) =>
+    {
+      e.preventDefault()
+      var file = e.dataTransfer.files(0)
+
+      var reader = new dom.FileReader();
+      dom.console.log((file))
+
+
+    }
 
 
   }
@@ -578,7 +593,7 @@ object Project
           ctx.fillText(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) - 0.7 * fontHeightText)
         }
 
-        if(stimme(i).equals(selection)) ctx.lineWidth = 3 else ctx.lineWidth = 2
+        if (stimme(i).equals(selection)) ctx.lineWidth = 3 else ctx.lineWidth = 2
         ctx.beginPath
         ctx.moveTo(getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
 
@@ -886,6 +901,10 @@ object Project
 
     rek(0)
 
+  }
+  def setStueck(neuesStueck : Array[ArrayBuffer[Ton]]): Unit =
+  {
+    stueck = neuesStueck
   }
 
 }

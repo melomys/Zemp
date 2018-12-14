@@ -22,7 +22,22 @@ html, body {margin: 0; height: 100%; overflow: hidden}
     height: 50px;
 }
 
-#textAendern, #takt, #zeilen{
+.kleinesFeld{
     width: 50px;
+}
+
+button{
+    display: inline-block;
+    text-align: center;
+    padding: 8px;
+    margin-top:5px;
+    border:10px;
+    border-radius: 3px;
+    background-color: white;
+}
+
+button:hover
+{
+    background-color: deepskyblue;
 }
 
