@@ -43,6 +43,10 @@ class jsPdf(orientation : String = "p",unit : String = "mm", format : String = "
 
   def setTextColor(ch1: String) : jsPdf = js.native
 
+  def addPage(format : String = "a4", orientation: String = "p") : jsPdf = js.native
+
+  def setPage(page : Int) : jsPdf = js.native
+
 
 }
 

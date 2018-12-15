@@ -46,7 +46,7 @@ object ImportExport
       val xCoord = (pageWidth - titelWidth) / 2
       val yCoord = 2.5 * fontSize / scaleFactor
 
-      doc.text(titel, xCoord, yCoord)
+      doc.text(Project.titelFeld.value, xCoord, yCoord)
 
 
       //zeichnen vom Hintergrund
@@ -56,97 +56,137 @@ object ImportExport
      // ctx.font = font
       //ctx.fillStyle = fontStyle
 
-      for (zeile <- 0 to zeilenAnzahl - 1)
+      for(page <- 1 to ((zeilenAnzahl + 1))/2)
       {
-        for (i <- 0 to tones.length - 1)
+
+        if(page > 1)
+          {
+            doc.addPage("a4", "l")
+          }
+        for (zeile <- 0 to math.min(zeilenAnzahl- (page-1)*2 - 1,1))
         {
-          doc.setLineWidth(1)
-          doc.text(tones(i), randSeite - 30, randOben + i * abstandToene + zeile * zeilenHoehe + fontSize / 2)
+          for (i <- 0 to tones.length - 1)
+          {
+            doc.setDrawColor(farbeHintergrund)
+            doc.setLineWidth(1)
+            doc.text(tones(i), randSeite - 30, randOben + i * abstandToene + zeile * zeilenHoehe + fontSize / 2)
 
 
-          doc.line(randSeite,randOben+i*abstandToene+zeile*zeilenHoehe,randSeite+laengeHorizontalLinie,randOben+i*abstandToene+zeile*zeilenHoehe)
+            doc.line(randSeite, randOben + i * abstandToene + zeile * zeilenHoehe, randSeite + laengeHorizontalLinie, randOben + i * abstandToene + zeile * zeilenHoehe)
 
+          }
+          for (i <- 0 to (laengeHorizontalLinie.toInt - emptySpace.toInt) / intervallViertel.toInt)
+          {
+
+            if (i % takt == 0) doc.setLineWidth(2) else doc.setLineWidth(1)
+            doc.line(randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe, randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
+          }
         }
-        for (i <- 0 to (laengeHorizontalLinie.toInt - emptySpace.toInt) / intervallViertel.toInt)
-        {
 
-          if (i % takt == 0) doc.setLineWidth(2) else doc.setLineWidth(1)
-          doc.line(randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe,randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
-        }
+
+
+
       }
-
 
       //zeichnen von den Stimmen
       val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
 
-      var lastPoint = Pointt(0,0)
-    for (stimmenIndex <- 0 to stueck.length - 1)
-    {
-
-      val stimme = stueck(stimmenIndex)
-
-      doc.setDrawColor(stimmenFarben(stimmenIndex))
-      doc.setTextColor(stimmenFarben(stimmenIndex))
-
-      for (i <- 0 to stimme.length - 1)
+      var lastPoint = Pointt(0, 0)
+      doc.text(stueck.length + "",50,20)
+      for (stimmenIndex <- 0 to stueck.length - 1)
       {
 
-        doc.setLineWidth(2)
-        val start = stimme(i).start
-        val laenge = stimme(i).laenge
+        val stimme = stueck(stimmenIndex)
 
 
-        if (Project.existiertDirekterVorgaengerTon(stimme(i), stimme))
+        doc.setDrawColor(stimmenFarben(stimmenIndex))
+        doc.setTextColor(stimmenFarben(stimmenIndex))
+
+        for (i <- 0 to stimme.length - 1)
         {
-          doc.line(lastPoint.x, lastPoint.y,lastPoint.x,  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start))
-        }
 
-        //zeichne Gesang
-        var gesangSchonGezeichnet = false
-        if (i > 0)
-        {
-          val hoeheVorgaenger = if (tones.indexOf(stimme(i - 1).hoehe) != -1) tones.indexOf(stimme(i - 1).hoehe) else stimme(i - 1).hoehe.toInt
-          val hoeheVonAktuellem = if (tones.indexOf(stimme(i).hoehe) != -1) tones.indexOf(stimme(i).hoehe) else stimme(i).hoehe.toInt
-          if (hoeheVorgaenger < hoeheVonAktuellem)
+          doc.setLineWidth(2)
+          val start = stimme(i).start
+          val laenge = stimme(i).laenge
+
+
+          if (Project.existiertDirekterVorgaengerTon(stimme(i), stimme))
           {
-            gesangSchonGezeichnet = true
-            doc.text(stimme(i).text,  getXKoordinateZumZeichnenAusTon(stimme(i)),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start) + 1.4 * fontSize)
+
+           // doc.setPage(getZeile(lastPoint.x)/2 + 1)
+            doc.setDrawColor(stimmenFarben(stimmenIndex))
+            doc.line(lastPoint.x, lastPoint.y, lastPoint.x, getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start))
           }
 
-        }
-        if (!gesangSchonGezeichnet)
-        {
-          doc.text(stimme(i).text,  getXKoordinateZumZeichnenAusTon(stimme(i)),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start) - 0.7 * fontSize)
-        }
+          //zeichne Gesang
+   println("-")
+            println("zeile: "+ getZeile(getXKoordinateZumZeichnenAusTon(stimme(i))))
+            println("page: " + getZeile(getXKoordinateZumZeichnenAusTon(stimme(i)))/2 + 1)
 
-        var aktuellerStartPunkt = Pointt( getXKoordinateZumZeichnenAusTon(stimme(i)),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start))
-
-        //zeile ist immer die relative zeile zum startschlag
-        def rek(zeile: Int): Unit =
-        {
-
-          if (start + laenge - (Project.getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+          doc.setPage(getZeile(stimme(i).start)/2 + 1)
+          doc.setDrawColor(stimmenFarben(stimmenIndex))
+          var gesangSchonGezeichnet = false
+          if (i > 0)
           {
-            var restSchlaege = start % schlaegeProZeile
-            if (restSchlaege == 0) restSchlaege = schlaegeProZeile
-            lastPoint = Pointt( getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start) + (zeile * zeilenHoehe))
-            doc.line(aktuellerStartPunkt.x,aktuellerStartPunkt.y,lastPoint.x,lastPoint.y)
+            val hoeheVorgaenger = if (tones.indexOf(stimme(i - 1).hoehe) != -1) tones.indexOf(stimme(i - 1).hoehe) else stimme(i - 1).hoehe.toInt
+            val hoeheVonAktuellem = if (tones.indexOf(stimme(i).hoehe) != -1) tones.indexOf(stimme(i).hoehe) else stimme(i).hoehe.toInt
+            if (hoeheVorgaenger < hoeheVonAktuellem)
+            {
+              gesangSchonGezeichnet = true
+              doc.text(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + 1.4 * fontSize)
+            }
+
           }
-          else
+          if (!gesangSchonGezeichnet)
           {
-            doc.line(aktuellerStartPunkt.x,aktuellerStartPunkt.y, getXKoordinateZumZeichnen(schlaegeProZeile + 1),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start) + (zeile * zeilenHoehe))
-            aktuellerStartPunkt = Pointt( getXKoordinateZumZeichnen(1),  getYKoordinateZumZeichnenAusTon(stimme(i)) +  zeilenAbstand(start) + ((zeile + 1) * zeilenHoehe))
-            rek(zeile + 1)
+            doc.text(stimme(i).text, getXKoordinateZumZeichnenAusTon(stimme(i)), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) - 0.7 * fontSize)
           }
+
+          var aktuellerStartPunkt = Pointt(getXKoordinateZumZeichnenAusTon(stimme(i)), math.round(getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start)).toInt)
+
+          //zeile ist immer die relative zeile zum startschlag
+          def rek(zeile: Int): Unit =
+          {
+
+            if (start + laenge - (Project.getZeile(start) + zeile) * schlaegeProZeile <= schlaegeProZeile)
+            {
+              var restSchlaege = start % schlaegeProZeile
+              if (restSchlaege == 0) restSchlaege = schlaegeProZeile
+              if((getZeile(start) + zeile)% 2 != 0)
+                {
+                                lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), math.round((getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))).toInt)
+                }
+              else
+              {
+                lastPoint = Pointt(getXKoordinateZumZeichnen(restSchlaege + laenge - zeile * schlaegeProZeile), math.round((getYKoordinateZumZeichnenAusTon(stimme(i)))))
+              }
+              doc.setPage((getZeile(start) + zeile)/2 + 1)
+              doc.line(aktuellerStartPunkt.x, aktuellerStartPunkt.y, lastPoint.x, lastPoint.y)
+            }
+            else
+            {
+              doc.setPage((getZeile(start)+zeile)/2 + 1)
+
+              doc.line(aktuellerStartPunkt.x, aktuellerStartPunkt.y, getXKoordinateZumZeichnen(schlaegeProZeile + 1), getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (zeile * zeilenHoehe))
+
+              if((getZeile(start) + zeile + 1) % 2 != 0)
+                {
+                                aktuellerStartPunkt = Pointt(getXKoordinateZumZeichnen(1), math.round((getYKoordinateZumZeichnenAusTon(stimme(i)) + zeilenAbstand(start) + (((zeile + 1)) * zeilenHoehe))%doc.internal.pageSize.getHeight()).toInt)
+                }
+              else{
+                              aktuellerStartPunkt = Pointt(getXKoordinateZumZeichnen(1), (getYKoordinateZumZeichnenAusTon(stimme(i))))
+              }
+              rek(zeile + 1)
+            }
+          }
+
+          rek(0)
+
         }
-
-        rek(0)
-
       }
-    }
 
 
-     doc.save(Project.titelFeld.value + ".pdf")
+   doc.save(Project.titelFeld.value + ".pdf")
 
     }
 
@@ -249,13 +289,15 @@ def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
 
   def zeilenAbstand(schlag: Double): Int =
   {
-    getZeile(schlag) * zeilenHoehe
+    getZeile(schlag)%2 * zeilenHoehe
 
   }
 
   def getZeile(schlag: Double): Int =
   {
     val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
+
+    println("in getZeile: " +  ((schlag - 1) / schlaegeProZeile).toInt)
     ((schlag - 1) / schlaegeProZeile).toInt
   }
 

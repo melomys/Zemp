@@ -62,7 +62,7 @@ object Project
   val farbeHintergrund = "#d0d0d0"
   // val farbeErsteStimme = "#DD1E1ECC"
 
-  val stimmenFarben = Array("#DD1E1E", "#ff0000", "#ffff00")
+  val stimmenFarben = Array("#dd1e1e", "#ff0000", "#ffff00")
   val farbeHint = "#0000ff"
 
   //laenge der linie
