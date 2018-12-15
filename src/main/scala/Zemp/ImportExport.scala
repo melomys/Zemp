@@ -11,6 +11,9 @@ object ImportExport
 {
    var faktor = 0.0
 
+  //pdf darstellung ist um paar pixel verschoben
+  val pdfOffSet = 1
+
   var randSeite = 0
   var randOben  = 0
       var intervallViertel =0
@@ -143,7 +146,7 @@ object ImportExport
     }
 
 
-     doc.save(titel + ".pdf")
+     doc.save(Project.titelFeld.value + ".pdf")
 
     }
 
@@ -237,7 +240,7 @@ def getXKoordinateZumZeichnenAusTon(ton: Ton): Int =
   def getXKoordinateZumZeichnen(x: Double): Int =
   {
 
-    (randSeite + emptySpace + (x - 1) * aktuelleNotenLaenge).toInt
+    pdfOffSet+ (randSeite + emptySpace + (x - 1) * aktuelleNotenLaenge).toInt
 
   }
 

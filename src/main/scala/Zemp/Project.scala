@@ -33,11 +33,12 @@ object Project
   var textFeld: html.Input = null
   var taktFeld: html.Input = null
   var zeilenFeld: html.Input = null
+  var titelFeld :html.Input = null
   var speichernButton: html.Button = null
   var textFeldIndex = -1
 
   val intervallViertel = 32
-  val aktuelleNotenLaenge = intervallViertel / 4
+  val aktuelleNotenLaenge = intervallViertel
 
   val abstandToene = intervallViertel
   var zeilenAnzahl = 2
@@ -189,6 +190,7 @@ object Project
     textFeld = dom.document.getElementById("textAendern").asInstanceOf[html.Input]
     taktFeld = dom.document.getElementById("takt").asInstanceOf[html.Input]
     zeilenFeld = dom.document.getElementById("zeilen").asInstanceOf[html.Input]
+    titelFeld = dom.document.getElementById("titel").asInstanceOf[html.Input]
     zeilenFeld.value = zeilenAnzahl + ""
 
     speichernButton = dom.document.getElementById("speichern").asInstanceOf[html.Button]
@@ -511,6 +513,10 @@ object Project
 
 
     }
+    titelFeld.onkeydown = (e:dom.KeyboardEvent) =>
+      {
+        titel = titelFeld.value
+      }
 
 
   }
