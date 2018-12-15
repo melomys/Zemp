@@ -325,10 +325,19 @@ object Project
             {
               stueck(i) = aktuelleStimme.sortWith((A, B: Ton) => A.start < B.start)
               aktuelleStimme = stueck(i)
+              //zeilen anzahl anpassen
+
+              val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
+              var letzterSchlag = aktuelleStimme(aktuelleStimme.length - 1).start + aktuelleStimme(aktuelleStimme.length - 1).laenge
+              var grenzeFuerNeueZeile = aktuelleNotenLaenge / intervallViertel * takt
+              if(letzterSchlag % schlaegeProZeile > schlaegeProZeile - grenzeFuerNeueZeile)
+                {
+                  zeilenAnzahl = math.max(2, getZeile(letzterSchlag)+2)
+                  onResize()
+                }
+
             }
           }
-          //aktuelleStimme = aktuelleStimme.sortWith((A, B: Ton) => A.start < B.start)
-          //  println(stueck)
 
           hintTon = Ton(note, start + laenge, 0)
 
