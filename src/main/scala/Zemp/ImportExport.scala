@@ -37,8 +37,9 @@ object ImportExport
       emptySpace = math.round(Project.emptySpace*faktor).toInt
       aktuelleNotenLaenge = math.round(Project.aktuelleNotenLaenge*faktor).toInt
 
-      //Zentrierung vom Titel
+      // Zeichnung und Zentrierung vom Titel
       val fontSize = doc.internal.getFontSize()
+
       val pageWidth = doc.internal.pageSize.getWidth()
       val scaleFactor = doc.internal.scaleFactor
       val titelWidth = doc.getStringUnitWidth(titel) * fontSize / scaleFactor
@@ -81,6 +82,20 @@ object ImportExport
             if (i % takt == 0) doc.setLineWidth(2) else doc.setLineWidth(1)
             doc.line(randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe, randSeite + laengeHorizontalLinie - i * intervallViertel, randOben + zeile * zeilenHoehe + abstandToene * (tones.length - 1))
           }
+
+          //Fuss Zeichnen
+          doc.setFontSize(fontSize - 3)
+
+          val fussText = Project.titelFeld.value+ " - " + page
+          val fussWidth = doc.getStringUnitWidth(fussText) * doc.internal.getFontSize()/scaleFactor
+          val xCoord = randSeite + laengeHorizontalLinie - fussWidth
+          val yCoord = doc.internal.pageSize.getHeight() - 2* doc.internal.getFontSize()
+
+          doc.text(fussText,xCoord,yCoord)
+
+
+
+          doc.setFontSize(fontSize)
         }
 
 
