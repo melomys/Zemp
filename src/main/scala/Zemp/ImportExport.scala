@@ -107,7 +107,6 @@ object ImportExport
       val schlaegeProZeile = (laengeHorizontalLinie - emptySpace) / aktuelleNotenLaenge
 
       var lastPoint = Pointt(0, 0)
-      doc.text(stueck.length + "",50,20)
       for (stimmenIndex <- 0 to stueck.length - 1)
       {
 
@@ -134,9 +133,6 @@ object ImportExport
           }
 
           //zeichne Gesang
-   println("-")
-            println("zeile: "+ getZeile(getXKoordinateZumZeichnenAusTon(stimme(i))))
-            println("page: " + getZeile(getXKoordinateZumZeichnenAusTon(stimme(i)))/2 + 1)
 
           doc.setPage(getZeile(stimme(i).start)/2 + 1)
           doc.setDrawColor(stimmenFarben(stimmenIndex))
@@ -208,14 +204,63 @@ object ImportExport
 
   def definiereEvents(): Unit =
   {
-      var importFeld = dom.document.getElementById("import").asInstanceOf[html.Input]
-      var importButton = dom.document.getElementById("importButton").asInstanceOf[html.Button]
 
-    importButton.onclick = (e: dom.MouseEvent) =>
+
+    dom.document.ondragover = (e : dom.DragEvent) =>
+    {
+      e.preventDefault()
+      e.stopPropagation()
+      Project.canvas.classList.add("dragOver")
+    }
+
+
+    dom.document.ondragleave = (e : dom.DragEvent) =>
       {
-        val stueckString = importFeld.value
-            Project.setStueck(importStueck(stueckString))
+
+        e.preventDefault()
+        e.stopPropagation()
+        Project.canvas.classList.remove("dragOver")
       }
+
+    dom.document.ondragend = (e: dom.DragEvent) =>
+      {
+        e.preventDefault()
+        e.stopPropagation()
+        Project.canvas.classList.remove("dragOver")
+      }
+
+    dom.document.ondrop = (e: dom.DragEvent) =>
+    {
+      e.preventDefault()
+      e.stopPropagation()
+      Project.canvas.classList.remove("dragOver")
+      var file = e.dataTransfer.files(0)
+      dom.console.log(file.name)
+      dom.console.log(file)
+      var reader = new dom.FileReader
+      var text = reader.readAsText(file)
+      reader.onload = (e: dom.Event) =>
+      {
+        try
+        {
+          var neuesStueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton])
+
+           val tmpStueck = importStueck(reader.result.toString)
+
+          var index = 0;
+          for( stimme <- tmpStueck)
+            {
+              neuesStueck(index) = stimme;
+              index = index + 1
+            }
+          Project.setStueck(neuesStueck)
+        } catch
+          {
+            case e : Exception =>
+        }
+
+      }
+    }
 
 
   }
@@ -242,11 +287,11 @@ object ImportExport
     var file = new dom.Blob(a)
 
 
-    var el = dom.document.getElementById("export")
+    var el = dom.document.getElementById("export").asInstanceOf[html.Anchor]
     var url = dom.URL.createObjectURL(file)
     el.setAttribute("href", url)
     el.setAttribute("download",titel + ".zemp")
-    var ev = new dom.Event()
+    el.click
    // var event = new dom.MouseEvent()
    // el.dispatchEvent(event)
 

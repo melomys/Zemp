@@ -26,6 +26,14 @@ html, body {margin: 0; height: 100%; overflow: hidden}
     width: 50px;
 }
 
+.dragOver
+{
+  background-blend-mode: darken;
+    background-image : url("upload.png");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 button{
     display: inline-block;
     text-align: center;
