@@ -18,7 +18,7 @@ case class Ton(hoehe: String, start: Double, laenge: Double, text: String = "jo"
 object Project
 {
 
-  var stueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton])
+  var stueck = Array(new ArrayBuffer[Ton], new ArrayBuffer[Ton], new ArrayBuffer[Ton],new ArrayBuffer[Ton],new ArrayBuffer[Ton],new ArrayBuffer[Ton])
   var aktuelleStimme = stueck(0)
   val tones = Array("C", "B", "Ab", "G", "F", "Eb", "D", "C1")
 
@@ -38,7 +38,7 @@ object Project
   var textFeldIndex = -1
 
   val intervallViertel = 32
-  val aktuelleNotenLaenge = intervallViertel
+  val aktuelleNotenLaenge = intervallViertel/4
 
   val abstandToene = intervallViertel
   var zeilenAnzahl = 2
@@ -62,7 +62,7 @@ object Project
   val farbeHintergrund = "#d0d0d0"
   // val farbeErsteStimme = "#DD1E1ECC"
 
-  val stimmenFarben = Array("#dd1e1e", "#54b2d1", "#4de87b")
+  val stimmenFarben = Array("#dd1e1e", "#54b2d1", "#4de87b", "#eb7012","#b112eb","#c7be0a")
   val farbeHint = "#0000ff"
 
   //laenge der linie
@@ -152,6 +152,8 @@ object Project
     definiereEvents
     ImportExport.definiereEvents
 
+
+  /**
     var a = dom.document.getElementById("audio").asInstanceOf[html.Audio]
     a.play
     //Thread.sleep(5000)
@@ -162,23 +164,21 @@ object Project
 
 
     var played = 0
+    dom.console.log(a.played)
+
     a.addEventListener("ended", (e : dom.Event) =>
     {
       if(played<3)
         {
+          a.playbackRate=played+1
           a.play
           played = played +1
           println(played)
         }
     })
+**/
 
 
-    //var b = new MyAudio("rtn.mp3")
-
-    def ton() : Unit =
-    {
-      a.play
-    }
 
 
 
@@ -536,13 +536,7 @@ object Project
       onResize()
     })
 
-    speichernButton.onmousedown = (e: dom.MouseEvent) =>
-    {
-      //  dom.console.log("in eventhandling")
-      ImportExport.export(stueck, "Test123")
 
-
-    }
 
     titelFeld.onkeydown = (e:dom.KeyboardEvent) =>
       {
@@ -589,7 +583,7 @@ object Project
 
           //zeichne Gesang
           var gesangSchonGezeichnet = false
-          ctx.font = if (i == textFeldIndex) fontBoldText else fontText
+          ctx.font = if (i == textFeldIndex && stimme.equals(aktuelleStimme)) fontBoldText else fontText
           if (i > 0)
           {
             val hoeheVorgaenger = if (tones.indexOf(stimme(i - 1).hoehe) != -1) tones.indexOf(stimme(i - 1).hoehe) else stimme(i - 1).hoehe.toInt
